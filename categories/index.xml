@@ -2,12 +2,12 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Categories on Kirill Che. (g4s8)</title>
-    <link>https://g4s8.wtf/categories/</link>
+    <link>https://www.g4s8.wtf/categories/</link>
     <description>Recent content in Categories on Kirill Che. (g4s8)</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     
-	<atom:link href="https://g4s8.wtf/categories/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://www.g4s8.wtf/categories/index.xml" rel="self" type="application/rss+xml" />
     
     
   </channel>

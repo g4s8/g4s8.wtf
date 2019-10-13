@@ -2,31 +2,31 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Kirill Che. (g4s8)</title>
-    <link>https://g4s8.wtf/</link>
+    <link>https://www.g4s8.wtf/</link>
     <description>Recent content on Kirill Che. (g4s8)</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Fri, 11 Oct 2019 19:43:21 +0300</lastBuildDate>
     
-	<atom:link href="https://g4s8.wtf/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://www.g4s8.wtf/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Contact</title>
-      <link>https://g4s8.wtf/contact/</link>
+      <link>https://www.g4s8.wtf/contact/</link>
       <pubDate>Fri, 11 Oct 2019 19:43:21 +0300</pubDate>
       
-      <guid>https://g4s8.wtf/contact/</guid>
+      <guid>https://www.g4s8.wtf/contact/</guid>
       <description>Email (prefered): g4s8.public@gmail.com
 Telegram: @kirill_g4s8</description>
     </item>
     
     <item>
       <title>About</title>
-      <link>https://g4s8.wtf/about/</link>
+      <link>https://www.g4s8.wtf/about/</link>
       <pubDate>Fri, 11 Oct 2019 18:09:02 +0300</pubDate>
       
-      <guid>https://g4s8.wtf/about/</guid>
+      <guid>https://www.g4s8.wtf/about/</guid>
       <description>Hi, I&amp;rsquo;m Kirill Che. - I&amp;rsquo;m a freelancer and self-taught programmer. I&amp;rsquo;m making projects as software architect and consulting projects about technical decisions. Also, I&amp;rsquo;m active open source contributor and EO adopter.
 Short professional history 2013: I started as Android developer in Mercury development. I learned Java and Android by real tasks. A bit later I switched to web development in same company. We created web apps with Java using Spring, Hibernate and other enterprise tools.</description>
     </item>
