@@ -1,0 +1,161 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=author content="Kirill Che."><meta name=description content="Kirill Che (g4s8) personal website"><meta name=keywords content="blog,developer,personal,g4s8"><meta name=twitter:card content="summary"><meta name=twitter:title content="Enum: Object or global variable?"><meta name=twitter:description content="Everybody knows that global variables are evil. In case of global constants it&rsquo;s bad because the constant with the global scope creates strong dependency for a component on the data stored in this variable. If a global variable is an object, then it leads to tight coupling between variable users and this object (string dependency again). Java developers uses enums frequently as a container for global constants. But what if we think about it from the different point of view?"><meta property="og:title" content="Enum: Object or global variable?"><meta property="og:description" content="Everybody knows that global variables are evil. In case of global constants it&rsquo;s bad because the constant with the global scope creates strong dependency for a component on the data stored in this variable. If a global variable is an object, then it leads to tight coupling between variable users and this object (string dependency again). Java developers uses enums frequently as a container for global constants. But what if we think about it from the different point of view?"><meta property="og:type" content="article"><meta property="og:url" content="https://www.g4s8.wtf/posts/2020-12-26-enum-objects/"><meta property="article:published_time" content="2020-04-18T00:00:00+00:00"><meta property="article:modified_time" content="2020-04-18T00:00:00+00:00"><base href=https://www.g4s8.wtf/posts/2020-12-26-enum-objects/><title>Enum: Object or global variable? · Kirill Che. (g4s8)</title><link rel=canonical href=https://www.g4s8.wtf/posts/2020-12-26-enum-objects/><link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CMerriweather:300,700%7CSource+Code+Pro:400,700" rel=stylesheet><link rel=stylesheet href=https://use.fontawesome.com/releases/v5.8.1/css/all.css integrity=sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf crossorigin=anonymous><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin=anonymous><link rel=stylesheet href=/css/coder.min.28d751104f30c16da1aa1bb04015cbe662cacfe0d1b01af4f2240ad58580069c.css integrity="sha256-KNdREE8wwW2hqhuwQBXL5mLKz+DRsBr08iQK1YWABpw=" crossorigin=anonymous media=screen><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-32x32.png sizes=32x32><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-16x16.png sizes=16x16><meta name=generator content="Hugo 0.78.1"></head><body><main class=wrapper><nav class=navigation><section class=container><a class=navigation-title href=/>Kirill Che. (g4s8)</a>
+<input type=checkbox id=menu-toggle>
+<label class="menu-button float-right" for=menu-toggle><i class="fas fa-bars"></i></label><ul class=navigation-list><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/about/>About</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/posts/>Blog</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/contact/>Contact me</a></li></ul></section></nav><div class=content><section class="container post"><article><header><div class=post-title><h1 class=title>Enum: Object or global variable?</h1></div><div class=post-meta><div class=date><span class=posted-on><i class="fas fa-calendar"></i><time datetime=2020-04-18T00:00:00Z>April 18, 2020</time></span>
+<span class=reading-time><i class="fas fa-clock"></i>5 minutes read</span></div></div></header><div><p>Everybody knows that global variables are evil. In case of global constants it&rsquo;s bad
+because the constant with the global scope creates strong dependency for a component
+on the <strong>data</strong> stored in this variable. If a global variable is an object, then it leads
+to tight coupling between variable users and this object (string dependency again).
+Java developers uses <code>enum</code>s frequently as a container for global constants.
+But what if we think about it from the different point of view? Maybe it&rsquo;s possible to
+use <code>enum</code>s as real objects but not as a dumb constants container?</p><h2 id=whats-wrong>What&rsquo;s wrong?</h2><p>This is an example of common Java <code>enum</code> which coopts all bad
+practives of global constants.</p><p>Assume we have CLI app where user can specify different naming policies
+to store some files in local file system:</p><ul><li>plain names = same as default item names</li><li>append SHA256 checksum to file name</li><li>append SHA1 checksum to file name</li><li>other policies could be added later</li></ul><p>This requirements I took from real practice.</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#75715e>// All supported naming policies
+</span><span style=color:#75715e></span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>enum</span> NamingPolicy <span style=color:#f92672>{</span>
+  PLAIN<span style=color:#f92672>,</span>
+  SHA256<span style=color:#f92672>,</span>
+  SHA1<span style=color:#f92672>;</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#75715e>// some data item which can be saved to local file
+</span><span style=color:#75715e></span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>FileItem</span> <span style=color:#f92672>{</span>
+
+  <span style=color:#75715e>// some data that should be saved locally
+</span><span style=color:#75715e></span>  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> Content data<span style=color:#f92672>;</span>
+
+  <span style=color:#75715e>// constructor FileItem(Content) ommited
+</span><span style=color:#75715e></span>
+  <span style=color:#75715e>// save content to `dir` using `policy` for file names
+</span><span style=color:#75715e></span>  <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>save</span><span style=color:#f92672>(</span>Path dir<span style=color:#f92672>,</span> NamingPolicy policy<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>switch</span> <span style=color:#f92672>(</span>policy<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+      <span style=color:#66d9ef>case</span> PLAIN<span style=color:#f92672>:</span>
+        Files<span style=color:#f92672>.</span><span style=color:#a6e22e>write</span><span style=color:#f92672>(</span>
+          dir<span style=color:#f92672>.</span><span style=color:#a6e22e>resolve</span><span style=color:#f92672>(</span>data<span style=color:#f92672>.</span><span style=color:#a6e22e>name</span><span style=color:#f92672>()),</span> data<span style=color:#f92672>.</span><span style=color:#a6e22e>bytes</span><span style=color:#f92672>()</span>
+        <span style=color:#f92672>);</span>
+        <span style=color:#66d9ef>break</span><span style=color:#f92672>;</span>
+      <span style=color:#66d9ef>case</span> SHA256<span style=color:#f92672>:</span>
+      <span style=color:#66d9ef>case</span> SHA1<span style=color:#f92672>:</span>
+        <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>byte</span><span style=color:#f92672>[]</span> bytes <span style=color:#f92672>=</span> data<span style=color:#f92672>.</span><span style=color:#a6e22e>bytes</span><span style=color:#f92672>();</span>
+        String hash <span style=color:#f92672>=</span> hex<span style=color:#f92672>(</span>checksum<span style=color:#f92672>(</span>policy<span style=color:#f92672>.</span><span style=color:#a6e22e>name</span><span style=color:#f92672>(),</span> bytes<span style=color:#f92672>));</span>
+        Files<span style=color:#f92672>.</span><span style=color:#a6e22e>write</span><span style=color:#f92672>(</span>
+          dir<span style=color:#f92672>.</span><span style=color:#a6e22e>resolve</span><span style=color:#f92672>(</span>hash <span style=color:#f92672>+</span> data<span style=color:#f92672>.</span><span style=color:#a6e22e>name</span><span style=color:#f92672>()),</span>
+          data<span style=color:#f92672>.</span><span style=color:#a6e22e>bytes</span><span style=color:#f92672>()</span>
+        <span style=color:#f92672>);</span>
+        <span style=color:#66d9ef>break</span><span style=color:#f92672>;</span>
+      <span style=color:#66d9ef>default</span><span style=color:#f92672>:</span>
+        <span style=color:#66d9ef>throw</span> <span style=color:#66d9ef>new</span> UnsupportedException<span style=color:#f92672>(</span>
+          <span style=color:#e6db74>&#34;Unknown naming policy: &#34;</span> <span style=color:#f92672>+</span> policy
+        <span style=color:#f92672>);</span>
+    <span style=color:#f92672>}</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>The main problems with this code:</p><ul><li>strong dependency on <code>NamingPolicy</code> constants.</li><li>complexity of <code>save()</code> method depends on amount of
+policies, each new policy implementation require changes
+in <code>save()</code>, this method is like a main dispatcher of
+all scenarios, it&rsquo;s responsible for all known policy processing.</li><li>it&rsquo;s hard to test the behavior of <code>save()</code>;
+it has many behaviors, test method should cover all possible
+branches to verify it. If new policy will be added but not tested,
+then it will be easy to see passed tests for broken code.</li></ul><h2 id=how-to-change-it>How to change it?</h2><p>All of the issue can be easilly fixed by replacing <code>enum</code> with
+interface with respective implementations:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>interface</span> <span style=color:#a6e22e>NamingPolicy</span> <span style=color:#f92672>{</span>
+
+  <span style=color:#75715e>// File name for given source of file and data.
+</span><span style=color:#75715e></span>  String <span style=color:#a6e22e>name</span><span style=color:#f92672>(</span>String src<span style=color:#f92672>,</span> <span style=color:#66d9ef>byte</span><span style=color:#f92672>[]</span> data<span style=color:#f92672>);</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#75715e>// name is a given source name
+</span><span style=color:#75715e></span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Plain</span> <span style=color:#66d9ef>implements</span> NamingPolicy <span style=color:#f92672>{</span>
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>public</span> String <span style=color:#a6e22e>name</span><span style=color:#f92672>(</span>String src<span style=color:#f92672>,</span> <span style=color:#66d9ef>byte</span><span style=color:#f92672>[]</span> data<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>return</span> src<span style=color:#f92672>;</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#75715e>// name is a SHA256 of content data
+</span><span style=color:#75715e></span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Sha256</span> <span style=color:#66d9ef>implements</span> NamingPolicy <span style=color:#f92672>{</span>
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>public</span> String <span style=color:#a6e22e>name</span><span style=color:#f92672>(</span>String src<span style=color:#f92672>,</span> <span style=color:#66d9ef>byte</span><span style=color:#f92672>[]</span> data<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>return</span> src <span style=color:#f92672>+</span> hex<span style=color:#f92672>(</span>checksum<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;SHA-256&#34;</span><span style=color:#f92672>,</span> data<span style=color:#f92672>));</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#75715e>// name is a SHA1 of content data
+</span><span style=color:#75715e></span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Sha1</span> <span style=color:#66d9ef>implements</span> NamingPolicy <span style=color:#f92672>{</span>
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>public</span> String <span style=color:#a6e22e>name</span><span style=color:#f92672>(</span>String src<span style=color:#f92672>,</span> <span style=color:#66d9ef>byte</span><span style=color:#f92672>[]</span> data<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>return</span> src <span style=color:#f92672>+</span> hex<span style=color:#f92672>(</span>checksum<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;SHA-256&#34;</span><span style=color:#f92672>,</span> data<span style=color:#f92672>));</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+
+</code></pre></div><p>Now <code>FileItem</code> class looks like this:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#75715e>// some data item which can be saved to local file
+</span><span style=color:#75715e></span><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>FileItem</span> <span style=color:#f92672>{</span>
+
+  <span style=color:#75715e>// some data that should be saved locally
+</span><span style=color:#75715e></span>  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> Content data<span style=color:#f92672>;</span>
+
+  <span style=color:#75715e>// constructor FileItem(Content) ommited
+</span><span style=color:#75715e></span>
+  <span style=color:#75715e>// save content to `dir` using `policy` for file names
+</span><span style=color:#75715e></span>  <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>save</span><span style=color:#f92672>(</span>Path dir<span style=color:#f92672>,</span> NamingPolicy policy<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    Files<span style=color:#f92672>.</span><span style=color:#a6e22e>write</span><span style=color:#f92672>(</span>
+      dir<span style=color:#f92672>.</span><span style=color:#a6e22e>resolve</span><span style=color:#f92672>(</span>policy<span style=color:#f92672>.</span><span style=color:#a6e22e>name</span><span style=color:#f92672>(</span>data<span style=color:#f92672>.</span><span style=color:#a6e22e>name</span><span style=color:#f92672>(),</span> data<span style=color:#f92672>.</span><span style=color:#a6e22e>bytes</span><span style=color:#f92672>())),</span>
+      data<span style=color:#f92672>.</span><span style=color:#a6e22e>bytes</span><span style=color:#f92672>()</span>
+    <span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>All problems of global constants are solved:</p><ul><li><code>save()</code> methods depends on abstraction,
+the coupling is low</li><li>It&rsquo;s easy to introduce new naming policy
+by creating an implementation of the interface.
+The responsibility of <code>save()</code> method was narrowed down
+to saving logic only</li><li>The test for <code>save()</code> method covers all possible
+scenarios, since it doesn&rsquo;t depend on policies implementations</li></ul><h2 id=standard-enums>Standard enums</h2><p>But what if we move all these interface implementations to enum values?
+They don&rsquo;t really have any state, just a naked behavior and could be
+organized as <code>enum</code> decorators:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>interface</span> <span style=color:#a6e22e>NamingPolicy</span> <span style=color:#f92672>{</span>
+
+  <span style=color:#75715e>// File name for given source of file and data.
+</span><span style=color:#75715e></span>  String <span style=color:#a6e22e>name</span><span style=color:#f92672>(</span>String src<span style=color:#f92672>,</span> <span style=color:#66d9ef>byte</span><span style=color:#f92672>[]</span> data<span style=color:#f92672>);</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#75715e>// Appends specified digest of content to source name
+</span><span style=color:#75715e></span><span style=color:#66d9ef>final</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>HashNames</span> <span style=color:#66d9ef>implements</span> NamingPolicy <span style=color:#f92672>{</span>
+  <span style=color:#75715e>// digest API
+</span><span style=color:#75715e></span>  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> MessageDigest digest<span style=color:#f92672>;</span>
+
+  <span style=color:#75715e>// constructor ommited
+</span><span style=color:#75715e></span>
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>public</span> String <span style=color:#a6e22e>name</span><span style=color:#f92672>(</span>String src<span style=color:#f92672>,</span> <span style=color:#66d9ef>byte</span><span style=color:#f92672>[]</span> data<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>final</span> MessgeDigest copy <span style=color:#f92672>=</span> <span style=color:#f92672>(</span>MessageDigest<span style=color:#f92672>)</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>digest</span><span style=color:#f92672>.</span><span style=color:#a6e22e>clone</span><span style=color:#f92672>();</span>
+    copy<span style=color:#f92672>.</span><span style=color:#a6e22e>update</span><span style=color:#f92672>(</span>data<span style=color:#f92672>);</span>
+    <span style=color:#66d9ef>return</span> src <span style=color:#f92672>+</span> hex<span style=color:#f92672>(</span>copy<span style=color:#f92672>.</span><span style=color:#a6e22e>digest</span><span style=color:#f92672>());</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#75715e>// predefined standard policies in app domain
+</span><span style=color:#75715e></span><span style=color:#66d9ef>enum</span> StandardPolicies <span style=color:#66d9ef>implements</span> NamingPolicy <span style=color:#f92672>{</span>
+  <span style=color:#75715e>// File name is a source name
+</span><span style=color:#75715e></span>  PLAIN<span style=color:#f92672>((</span>src<span style=color:#f92672>,</span> data<span style=color:#f92672>)</span> <span style=color:#f92672>-&gt;</span> src<span style=color:#f92672>),</span>
+  <span style=color:#75715e>// Appends SHA1 hash of data to source name
+</span><span style=color:#75715e></span>  SHA1<span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> HashNames<span style=color:#f92672>(</span>MessageDigest<span style=color:#f92672>.</span><span style=color:#a6e22e>getInstance</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;SHA-1&#34;</span><span style=color:#f92672>))),</span>
+  <span style=color:#75715e>// Appends SHA256 hash of data to source name
+</span><span style=color:#75715e></span>  SHA256<span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> HashNames<span style=color:#f92672>(</span>MessageDigest<span style=color:#f92672>.</span><span style=color:#a6e22e>getInstance</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;SHA-256&#34;</span><span style=color:#f92672>));</span>
+
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> NamingPolicy policy<span style=color:#f92672>;</span>
+
+  StandardPolicies<span style=color:#f92672>(</span><span style=color:#66d9ef>final</span> NamingPolicy policy<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>policy</span> <span style=color:#f92672>=</span> policy<span style=color:#f92672>;</span>
+  <span style=color:#f92672>}</span>
+
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>public</span> String <span style=color:#a6e22e>name</span><span style=color:#f92672>(</span><span style=color:#66d9ef>final</span> String src<span style=color:#f92672>,</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>byte</span><span style=color:#f92672>[]</span> data<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>policy</span><span style=color:#f92672>.</span><span style=color:#a6e22e>name</span><span style=color:#f92672>(</span>src<span style=color:#f92672>,</span> data<span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>So we&rsquo;ve defined all standard naming policies for application,
+the developer can easy understand now that there are 3 standard
+policies in domain. Also, it&rsquo;s easy to parse enum values
+from string, e.g. if want to pass naming policy as CLI argument,
+we can transform it to one of the standard policies from enum values
+by using <code>StandardPolicies.valueOf(param)</code>.</p><h2 id=conclusion>Conclusion</h2><p>Java enums are not just a bag for global constants, enums can implement interfaces
+and behave like a real objects. It&rsquo;s quite friendly to group standard objects in
+application domain to single enum instance. It&rsquo;s easy to use but we still have
+enough flexibility to implement interface by other classes. So don&rsquo;t afraid enums
+just because it&rsquo;s often used wrong, use it carefully and get all benefits in your code.</p></div><footer></footer></article></section></div><footer class=footer><section class=container><p>g4s8.public@gmail.com</p>© 2020</section></footer></main><script type=application/javascript>var doNotTrack=false;if(!doNotTrack){(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create','UA-93683398-3','auto');ga('send','pageview');}</script></body></html>

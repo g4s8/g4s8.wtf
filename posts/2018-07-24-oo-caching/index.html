@@ -1,0 +1,146 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=author content="Kirill Che."><meta name=description content="Kirill Che (g4s8) personal website"><meta name=keywords content="blog,developer,personal,g4s8"><meta name=twitter:card content="summary"><meta name=twitter:title content="Object oriented caching in Java"><meta name=twitter:description content="We have a lot of caching libraries for Java, just take a look at guava or apache-commons JCS. But I don&rsquo;t really like them because of procedural caching approach, this is why I started new caching library for OO code, here I&rsquo;ll try to explain main ideas.
+ &ldquo;There are only two hard things in Computer Science: cache invalidation and naming things.&rdquo; (Phil Karlton)
+ First of all, just look at existing popular cache libraries:"><meta property="og:title" content="Object oriented caching in Java"><meta property="og:description" content="We have a lot of caching libraries for Java, just take a look at guava or apache-commons JCS. But I don&rsquo;t really like them because of procedural caching approach, this is why I started new caching library for OO code, here I&rsquo;ll try to explain main ideas.
+ &ldquo;There are only two hard things in Computer Science: cache invalidation and naming things.&rdquo; (Phil Karlton)
+ First of all, just look at existing popular cache libraries:"><meta property="og:type" content="article"><meta property="og:url" content="https://www.g4s8.wtf/posts/2018-07-24-oo-caching/"><meta property="article:published_time" content="2018-07-24T00:00:00+00:00"><meta property="article:modified_time" content="2018-07-24T00:00:00+00:00"><base href=https://www.g4s8.wtf/posts/2018-07-24-oo-caching/><title>Object oriented caching in Java · Kirill Che. (g4s8)</title><link rel=canonical href=https://www.g4s8.wtf/posts/2018-07-24-oo-caching/><link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CMerriweather:300,700%7CSource+Code+Pro:400,700" rel=stylesheet><link rel=stylesheet href=https://use.fontawesome.com/releases/v5.8.1/css/all.css integrity=sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf crossorigin=anonymous><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin=anonymous><link rel=stylesheet href=/css/coder.min.28d751104f30c16da1aa1bb04015cbe662cacfe0d1b01af4f2240ad58580069c.css integrity="sha256-KNdREE8wwW2hqhuwQBXL5mLKz+DRsBr08iQK1YWABpw=" crossorigin=anonymous media=screen><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-32x32.png sizes=32x32><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-16x16.png sizes=16x16><meta name=generator content="Hugo 0.78.1"></head><body><main class=wrapper><nav class=navigation><section class=container><a class=navigation-title href=/>Kirill Che. (g4s8)</a>
+<input type=checkbox id=menu-toggle>
+<label class="menu-button float-right" for=menu-toggle><i class="fas fa-bars"></i></label><ul class=navigation-list><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/about/>About</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/posts/>Blog</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/contact/>Contact me</a></li></ul></section></nav><div class=content><section class="container post"><article><header><div class=post-title><h1 class=title>Object oriented caching in Java</h1></div><div class=post-meta><div class=date><span class=posted-on><i class="fas fa-calendar"></i><time datetime=2018-07-24T00:00:00Z>July 24, 2018</time></span>
+<span class=reading-time><i class="fas fa-clock"></i>5 minutes read</span></div></div></header><div><p>We have a lot of caching libraries for Java,
+just take a look at <a href=https://github.com/google/guava>guava</a> or
+<a href=https://commons.apache.org/proper/commons-jcs/>apache-commons JCS</a>. But I don&rsquo;t really like
+them because of procedural caching approach, this is why I started
+<a href=https://github.com/g4s8/cactoos-cache>new caching library</a>
+for OO code, here I&rsquo;ll try to explain main ideas.</p><blockquote><p>&ldquo;There are only two hard things in Computer Science: cache invalidation and naming things.&rdquo; (Phil Karlton)</p></blockquote><p>First of all, just look at existing popular cache libraries:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#75715e>// Guava cache
+</span><span style=color:#75715e></span>LoadingCache<span style=color:#f92672>&lt;</span>Key<span style=color:#f92672>,</span> Value<span style=color:#f92672>&gt;</span> cache <span style=color:#f92672>=</span> CacheBuilder<span style=color:#f92672>.</span><span style=color:#a6e22e>newBuilder</span><span style=color:#f92672>()</span>
+  <span style=color:#f92672>.</span><span style=color:#a6e22e>maximumSize</span><span style=color:#f92672>(</span>42<span style=color:#f92672>)</span>
+  <span style=color:#f92672>.</span><span style=color:#a6e22e>expireAfterWrite</span><span style=color:#f92672>(</span>1<span style=color:#f92672>,</span> TimeUnit<span style=color:#f92672>.</span><span style=color:#a6e22e>MINUTES</span><span style=color:#f92672>)</span>
+  <span style=color:#f92672>.</span><span style=color:#a6e22e>removalListener</span><span style=color:#f92672>(</span>listener<span style=color:#f92672>)</span>
+  <span style=color:#f92672>.</span><span style=color:#a6e22e>build</span><span style=color:#f92672>(</span>
+    <span style=color:#66d9ef>new</span> CacheLoader<span style=color:#f92672>&lt;</span>Key<span style=color:#f92672>,</span> Value<span style=color:#f92672>&gt;()</span> <span style=color:#f92672>{</span>
+      <span style=color:#66d9ef>public</span> Value <span style=color:#a6e22e>load</span><span style=color:#f92672>(</span>Key key<span style=color:#f92672>)</span> <span style=color:#66d9ef>throws</span> AnyException <span style=color:#f92672>{</span>
+        <span style=color:#66d9ef>return</span> loadSomeValue<span style=color:#f92672>(</span>key<span style=color:#f92672>);</span>
+      <span style=color:#f92672>}</span>
+    <span style=color:#f92672>}</span>
+  <span style=color:#f92672>);</span>
+
+Value val <span style=color:#f92672>=</span> cache<span style=color:#f92672>.</span><span style=color:#a6e22e>get</span><span style=color:#f92672>(</span>key<span style=color:#f92672>);</span>
+
+cache<span style=color:#f92672>.</span><span style=color:#a6e22e>put</span><span style=color:#f92672>(</span>key<span style=color:#f92672>,</span> val<span style=color:#f92672>);</span>
+</code></pre></div><p>and one more:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#75715e>// Apache JCS
+</span><span style=color:#75715e></span><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Image</span> <span style=color:#66d9ef>implements</span> Serializable <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>public</span> String name<span style=color:#f92672>;</span>
+  <span style=color:#66d9ef>public</span> Bitmap bitmap<span style=color:#f92672>;</span>
+<span style=color:#f92672>}</span>
+
+CacheAccess<span style=color:#f92672>&lt;</span>String<span style=color:#f92672>,</span> Image<span style=color:#f92672>&gt;</span> cache <span style=color:#f92672>=</span> JCS<span style=color:#f92672>.</span><span style=color:#a6e22e>getInstance</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;images&#34;</span><span style=color:#f92672>);</span>
+Image image <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Image<span style=color:#f92672>();</span>
+image<span style=color:#f92672>.</span><span style=color:#a6e22e>name</span> <span style=color:#f92672>=</span> name<span style=color:#f92672>;</span>
+image<span style=color:#f92672>.</span><span style=color:#a6e22e>bitmap</span> <span style=color:#f92672>=</span> bitmap<span style=color:#f92672>;</span>
+cache<span style=color:#f92672>.</span><span style=color:#a6e22e>put</span><span style=color:#f92672>(</span>name<span style=color:#f92672>,</span> image<span style=color:#f92672>);</span>
+</code></pre></div><p>They uses cache as a storage for data structures and the maintenance of
+such code is like a hell. Just imagine, if you need to add synchronization to all cache
+clients, then add logging, or change cache logic. In all these cases you need to
+find all consumers of static instance, inject additional field for synchronization to all
+classes and cross fingers that nobody else will use this cache without that locking object.</p><h2 id=how-it-should-be>How it should be</h2><p>As for me, caching should be implemented as a decorator for expensive operation.
+If we want to save the result of downloading/computation/payed-service-request or
+something else, the most object oriented way is to decorate this call and save the result.
+The only problem here is that we need to generalize expensive resource access as
+an interface to be able to write generic caching decorators for any resource.
+The most primitive implementation may look like this:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>interface</span> <span style=color:#a6e22e>Resource</span><span style=color:#f92672>&lt;</span>T<span style=color:#f92672>&gt;</span> <span style=color:#f92672>{</span>
+  T <span style=color:#a6e22e>get</span><span style=color:#f92672>();</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#66d9ef>class</span> <span style=color:#a6e22e>CachedResource</span><span style=color:#f92672>&lt;</span>T<span style=color:#f92672>&gt;</span> <span style=color:#66d9ef>implements</span> Resource<span style=color:#f92672>&lt;</span>T<span style=color:#f92672>&gt;</span> <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>private</span> T cached<span style=color:#f92672>;</span>
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> Resource<span style=color:#f92672>&lt;</span>T<span style=color:#f92672>&gt;</span> origin<span style=color:#f92672>;</span>
+
+  <span style=color:#a6e22e>@Override</span>
+  T <span style=color:#a6e22e>get</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>if</span> <span style=color:#f92672>(</span>cached <span style=color:#f92672>==</span> <span style=color:#66d9ef>null</span><span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+      cached <span style=color:#f92672>=</span> origin<span style=color:#f92672>.</span><span style=color:#a6e22e>get</span><span style=color:#f92672>();</span>
+    <span style=color:#f92672>}</span>
+    <span style=color:#66d9ef>return</span> cached<span style=color:#f92672>;</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><h2 id=cactoos>Cactoos</h2><p>I decided to use <a href=https://github.com/yegor256/cactoos>Cactoos</a> library for it, because
+it already has generic resource access interfaces, e.g. <code>Func</code>, <code>Scalar</code> etc. Also it was
+designed to be extended by writing decorators. So if you have some <code>Func</code> implementation, you can wrap it
+with your own cached <code>Func</code>:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>new</span> Cached<span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>::</span>image<span style=color:#f92672>);</span>
+</code></pre></div><p>By the way, it already has some caching <code>Func</code>s, they are called <em>sticky</em> here
+(you can find more about it in this blog post:
+<a href=https://www.yegor256.com/2017/10/17/lazy-loading-caching-sticky-cactoos.html>lazy-loading-caching-sticky-cactoos</a>):
+<code>StickyFunc</code>, <code>StickyScalar</code>, but it is very simple and not really suitable for many real cases.
+This <code>Sticky*</code> implementations just keeps caching value in a map and doesn&rsquo;t pay attention to available
+memory in JVM or last access time or many other things which should be taken into account when
+you decide what kind of cache to use.</p><p>So I created a caching extension for Cactoos based on these primitives:
+<a href=https://github.com/g4s8/cactoos-cache>cactoos-cache</a>.
+It has different cache implementations, so you may use these decorators for particular cases.</p><p>For example, if you&rsquo;re caching big images and you want to clear cache when JVM requires
+more memory, you can use a cache based on
+<a href=https://docs.oracle.com/javase/7/docs/api/java/lang/ref/SoftReference.html><code>SoftReference</code></a>s: reference lifetime is configured by <code>-XX:SoftRefLRUPolicyMSPerMB</code> JVM option, which means how many milliseconds
+can live soft-reference for each free megabyte in heap, default value is 1000.
+Example:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>Func<span style=color:#f92672>&lt;</span>String<span style=color:#f92672>,</span> Bitmap<span style=color:#f92672>&gt;</span> images <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> SoftFunc<span style=color:#f92672>&lt;&gt;(</span>name <span style=color:#f92672>-&gt;</span> image<span style=color:#f92672>(</span>name<span style=color:#f92672>));</span>
+<span style=color:#66d9ef>assert</span> images<span style=color:#f92672>.</span><span style=color:#a6e22e>apply</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;kittens&#34;</span><span style=color:#f92672>)</span> <span style=color:#f92672>==</span> images<span style=color:#f92672>.</span><span style=color:#a6e22e>apply</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;kittens&#34;</span><span style=color:#f92672>);</span> <span style=color:#75715e>// same reference
+</span></code></pre></div><p>This code will keep downloaded image in memory while Java heap has free space,
+but this image can be garbage-collected when JVM requires more memory to allocate
+new object.</p><p>Another case is to keep object in memory while another object is alive.
+It can be implemented with
+<a href=https://docs.oracle.com/javase/7/docs/api/java/lang/ref/WeakReference.html><code>WeakReference</code></a>s:
+weak reference will not be garbage collected while any strong references to the same memory exists
+Example:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>Func<span style=color:#f92672>&lt;</span>File<span style=color:#f92672>,</span> Bytes<span style=color:#f92672>&gt;</span> files <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> WeakFunc<span style=color:#f92672>&lt;&gt;(</span>file <span style=color:#f92672>-&gt;</span> bytes<span style=color:#f92672>(</span>file<span style=color:#f92672>));</span>
+</code></pre></div><p>This code will keep file&rsquo;s content while file reference exist,
+it can be lost when <code>file</code> argument is not referenced anymore.</p><p>I&rsquo;m going to add more cache implementations, like LRU cache and cache
+based on expiration time, but main idea is to implement them all as
+decorators for Cactoos.</p><h2 id=benefits>Benefits</h2><p>I think the benefits are obvious here: cache is not a data access object here,
+but decorator for an interface. We can easily decorate this cache with synchronization,
+logging, or whatever you want:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>Func<span style=color:#f92672>&lt;</span>String<span style=color:#f92672>,</span> Image<span style=color:#f92672>&gt;</span> images <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> SyncFunc<span style=color:#f92672>&lt;&gt;(</span><span style=color:#66d9ef>new</span> SoftFunc<span style=color:#f92672>&lt;&gt;(</span>name <span style=color:#f92672>-&gt;</span> image<span style=color:#f92672>(</span>name<span style=color:#f92672>)));</span>
+</code></pre></div><p>also we can use it with dependency-injection and replace implementation for tests:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>RotatedImage</span> <span style=color:#66d9ef>implements</span> Image <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> Func<span style=color:#f92672>&lt;</span>String<span style=color:#f92672>,</span> Image<span style=color:#f92672>&gt;</span> source<span style=color:#f92672>;</span>
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> String name<span style=color:#f92672>;</span>
+
+  RotatedImage<span style=color:#f92672>(</span>Func<span style=color:#f92672>&lt;</span>String<span style=color:#f92672>,</span> Image<span style=color:#f92672>&gt;</span> source<span style=color:#f92672>,</span> String name<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>source</span> <span style=color:#f92672>=</span> source<span style=color:#f92672>;</span>
+    <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>name</span> <span style=color:#f92672>=</span> name<span style=color:#f92672>;</span>
+  <span style=color:#f92672>}</span>
+
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>render</span><span style=color:#f92672>(</span>Canvas cvs<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    RotatedImage<span style=color:#f92672>.</span><span style=color:#a6e22e>rotate</span><span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>source</span><span style=color:#f92672>.</span><span style=color:#a6e22e>apply</span><span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>name</span><span style=color:#f92672>)).</span><span style=color:#a6e22e>render</span><span style=color:#f92672>(</span>cvs<span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+  
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>static</span> Image <span style=color:#a6e22e>rotate</span><span style=color:#f92672>(</span>Image src<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#75715e>// apply rotation
+</span><span style=color:#75715e></span>  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#75715e>/**
+</span><span style=color:#75715e> * Unit test.
+</span><span style=color:#75715e> */</span>
+<span style=color:#66d9ef>class</span> <span style=color:#a6e22e>RotatedImageTest</span> <span style=color:#f92672>{</span>
+  <span style=color:#a6e22e>@Test</span>
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>canRotate</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+    Canvas canvs <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> FakeCanvas<span style=color:#f92672>();</span>
+    <span style=color:#75715e>// RotatedImage will use fake implementation for tests here
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>new</span> RotatedImage<span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> FakeImages<span style=color:#f92672>(),</span> <span style=color:#e6db74>&#34;image&#34;</span><span style=color:#f92672>).</span><span style=color:#a6e22e>render</span><span style=color:#f92672>(</span>canvas<span style=color:#f92672>);</span>
+    <span style=color:#75715e>// assert canvas ...
+</span><span style=color:#75715e></span>  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#75715e>/**
+</span><span style=color:#75715e> * Application code.
+</span><span style=color:#75715e> */</span>
+<span style=color:#66d9ef>class</span> <span style=color:#a6e22e>RotatedImages</span> <span style=color:#66d9ef>implements</span> Images <span style=color:#f92672>{</span>
+
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> Func<span style=color:#f92672>&lt;</span>String<span style=color:#f92672>,</span> Image<span style=color:#f92672>&gt;</span> source<span style=color:#f92672>;</span>
+
+  <span style=color:#66d9ef>public</span> <span style=color:#a6e22e>RotatedImages</span><span style=color:#f92672>(</span>NetworkImages network<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>source</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> SoftFunc<span style=color:#f92672>&lt;&gt;(</span>name <span style=color:#f92672>-&gt;</span> network<span style=color:#f92672>.</span><span style=color:#a6e22e>download</span><span style=color:#f92672>(</span>name<span style=color:#f92672>));</span>
+  <span style=color:#f92672>}</span>
+
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>public</span> Image <span style=color:#a6e22e>image</span><span style=color:#f92672>(</span>String name<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#75715e>// RotatedImage will use cache here
+</span><span style=color:#75715e></span>    <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>new</span> RotatedImage<span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>source</span><span style=color:#f92672>,</span> name<span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>Here <code>RotatedImages</code> class will use cache based on soft-references
+in application code, but unit test will use fake images without caching.</p></div><footer></footer></article></section></div><footer class=footer><section class=container><p>g4s8.public@gmail.com</p>© 2020</section></footer></main><script type=application/javascript>var doNotTrack=false;if(!doNotTrack){(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create','UA-93683398-3','auto');ga('send','pageview');}</script></body></html>

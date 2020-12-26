@@ -1,0 +1,136 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=author content="Kirill Che."><meta name=description content="Kirill Che (g4s8) personal website"><meta name=keywords content="blog,developer,personal,g4s8"><meta name=twitter:card content="summary"><meta name=twitter:title content="Object equality (Java)"><meta name=twitter:description content="Each object in java has two methods to check object equality: it is Object.equals(Object other) and Object.hashCode(). Often developers override these methods so they can store instances of Object subclasses in hash-based collections e.g. HashMap, HashSet etc. I don&rsquo;t like this design where each object can be compared for equality with any other object, but in this post I&rsquo;ll not criticize it, rather I&rsquo;ll try to demonstrate how to implement it correctly for object oriented code."><meta property="og:title" content="Object equality (Java)"><meta property="og:description" content="Each object in java has two methods to check object equality: it is Object.equals(Object other) and Object.hashCode(). Often developers override these methods so they can store instances of Object subclasses in hash-based collections e.g. HashMap, HashSet etc. I don&rsquo;t like this design where each object can be compared for equality with any other object, but in this post I&rsquo;ll not criticize it, rather I&rsquo;ll try to demonstrate how to implement it correctly for object oriented code."><meta property="og:type" content="article"><meta property="og:url" content="https://www.g4s8.wtf/posts/2018-08-10-equals/"><meta property="article:published_time" content="2018-08-10T00:00:00+00:00"><meta property="article:modified_time" content="2018-08-10T00:00:00+00:00"><base href=https://www.g4s8.wtf/posts/2018-08-10-equals/><title>Object equality (Java) · Kirill Che. (g4s8)</title><link rel=canonical href=https://www.g4s8.wtf/posts/2018-08-10-equals/><link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CMerriweather:300,700%7CSource+Code+Pro:400,700" rel=stylesheet><link rel=stylesheet href=https://use.fontawesome.com/releases/v5.8.1/css/all.css integrity=sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf crossorigin=anonymous><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin=anonymous><link rel=stylesheet href=/css/coder.min.28d751104f30c16da1aa1bb04015cbe662cacfe0d1b01af4f2240ad58580069c.css integrity="sha256-KNdREE8wwW2hqhuwQBXL5mLKz+DRsBr08iQK1YWABpw=" crossorigin=anonymous media=screen><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-32x32.png sizes=32x32><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-16x16.png sizes=16x16><meta name=generator content="Hugo 0.78.1"></head><body><main class=wrapper><nav class=navigation><section class=container><a class=navigation-title href=/>Kirill Che. (g4s8)</a>
+<input type=checkbox id=menu-toggle>
+<label class="menu-button float-right" for=menu-toggle><i class="fas fa-bars"></i></label><ul class=navigation-list><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/about/>About</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/posts/>Blog</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/contact/>Contact me</a></li></ul></section></nav><div class=content><section class="container post"><article><header><div class=post-title><h1 class=title>Object equality (Java)</h1></div><div class=post-meta><div class=date><span class=posted-on><i class="fas fa-calendar"></i><time datetime=2018-08-10T00:00:00Z>August 10, 2018</time></span>
+<span class=reading-time><i class="fas fa-clock"></i>5 minutes read</span></div></div></header><div><p>Each <a href=https://docs.oracle.com/javase/7/docs/api/java/lang/Object.html#equals(java.lang.Object)>object</a>
+in java has two methods to check object equality:
+it is <code>Object.equals(Object other)</code> and <code>Object.hashCode()</code>.
+Often developers override these methods so they can store
+instances of <code>Object</code> subclasses in hash-based collections
+e.g. <code>HashMap</code>, <code>HashSet</code> etc.
+I don&rsquo;t like this design where each object can be
+compared for equality with any other object, but in this post
+I&rsquo;ll not criticize it, rather I&rsquo;ll try to demonstrate how to
+implement it correctly for object oriented code.</p><h2 id=protocol>Protocol</h2><p>First of all we need to understand the protocol of these methods,
+it&rsquo;s not defined in method signature, but described in javadocs:</p><blockquote><p>The equals method implements an equivalence relation on non-null object references:
+It is reflexive: for any non-null reference value <code>x</code>, <code>x.equals(x)</code> should return <code>true</code>.
+It is symmetric: for any non-null reference values <code>x</code> and <code>y</code>, <code>x.equals(y)</code> should return <code>true</code> if and only if <code>y.equals(x)</code> returns <code>true</code>.
+It is transitive: for any non-null reference values <code>x</code>, <code>y</code> and <code>z</code>, if <code>x.equals(y)</code> returns true and <code>y.equals(z)</code> returns <code>true</code>, then <code>x.equals(z)</code> should return <code>true</code>.
+It is consistent: for any non-null reference values <code>x</code> and <code>y</code>, multiple invocations of <code>x.equals(y)</code> consistently return <code>true</code> or consistently return <code>false</code>, provided no information used in equals comparisons on the objects is modified.
+For any non-null reference value <code>x</code>, <code>x.equals(null)</code> should return <code>false</code>.
+The <code>equals</code> method for class <code>Object</code> implements the most discriminating possible equivalence relation on objects; that is, for any non-null reference values <code>x</code> and <code>y</code>, this method returns <code>true</code> if and only if <code>x</code> and <code>y</code> refer to the same object (<code>x == y</code> has the value <code>true</code>).
+Note that it is generally necessary to override the <code>hashCode</code> method whenever this method is overridden, so as to maintain the general contract for the <code>hashCode</code> method, which states that equal objects must have equal hash codes.</p></blockquote><p>It&rsquo;s important to remember that all these requirements are handshake deals, java compiler will not be able to
+check that developers obey these arrangements.</p><h2 id=implementing>Implementing</h2><p>It&rsquo;s very easy to implement <code>equals()</code> or <code>hashCode()</code> for
+<a href=https://www.yegor256.com/2016/07/06/data-transfer-object.html>DTOs</a>
+which are very popular in java world,
+even the most popular IDE
+<a href=https://www.jetbrains.com/help/idea/generate-equals-and-hashcode-wizard.html>can generate</a>
+these methods automatically. Also it&rsquo;s not a problem to write it for <code>final</code> classes
+which don&rsquo;t implement domain types.</p><p>But if you&rsquo;re making object-oriented java module, then, most probably, you have interfaces for
+your domain objects and many implementations or decorators for them. For instance you may have <code>User</code>
+object:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>interface</span> <span style=color:#a6e22e>User</span> <span style=color:#f92672>{</span>
+  <span style=color:#75715e>/**
+</span><span style=color:#75715e>   * User id.
+</span><span style=color:#75715e>   */</span>
+  String <span style=color:#a6e22e>uid</span><span style=color:#f92672>();</span>
+  
+  <span style=color:#75715e>/**
+</span><span style=color:#75715e>   * User name.
+</span><span style=color:#75715e>   */</span>
+  String <span style=color:#a6e22e>name</span><span style=color:#f92672>();</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>and implementations:</p><ul><li><code>User user = new SqlUser(database, id)</code> - to find user in a database by id</li><li><code>User user = new RqUser(users, request)</code> - to get current user from HTTP request</li><li><code>User user = users.user(id)</code> - user by id from <code>Users</code> object</li></ul><p>In all these cases we may have different class implementations of same object
+and we are not able to use <code>User</code> as a key in hash-based collection if we implement
+<code>equals</code>/<code>hashCode</code> as JDK tutorials suggested, because each class will check
+that another object has same class type as self: it&rsquo;s required to be <em>symmetric</em>,
+because if we don&rsquo;t do type checking we can get <code>true</code> result for <code>x.equals(y)</code>, but not
+for <code>y.equals(x)</code> if <code>x</code> class implements equality check based on interface, but
+<code>y</code> class don&rsquo;t do that (or event it uses <code>Object.equals</code> implementation).</p><p>So how to solve it? If we don&rsquo;t want to ignore built-in collections (like <code>HashMap</code> or <code>HashSet</code>),
+but wants to decorate our objects and use different implementations of one interface we need
+to invent another approach for writing <code>equals</code> methods to satisfy JDK requirements, but do not brake
+OO code.</p><h2 id=decorators>Decorators</h2><p>I&rsquo;ve found a solution which can help here: we can create the decorator for
+our domain object which will implement <code>equals</code> based on interface methods,
+not fields of the object. To begin we need to find <em>identity</em> method which will return always same
+value for one object instance and will be unique for different objects, this is required by
+<code>equals</code> rules to be <em>consistent</em>.
+For <code>User</code> object it will be <code>uid()</code> (user id) method,
+which is unique for different users and always the same for one user instance.
+We need to use this method in actual <code>equals</code> and <code>hashCode</code> implementations:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>final</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>EqUser</span> <span style=color:#66d9ef>implements</span> User <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> User origin<span style=color:#f92672>;</span>
+
+    EqUser<span style=color:#f92672>(</span><span style=color:#66d9ef>final</span> User origin<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+        <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>origin</span> <span style=color:#f92672>=</span> origin<span style=color:#f92672>;</span>
+    <span style=color:#f92672>}</span>
+
+    <span style=color:#a6e22e>@Override</span>
+    <span style=color:#66d9ef>public</span> String <span style=color:#a6e22e>uid</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+        <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>origin</span><span style=color:#f92672>.</span><span style=color:#a6e22e>uid</span><span style=color:#f92672>();</span>
+    <span style=color:#f92672>}</span>
+    <span style=color:#a6e22e>@Override</span>
+    <span style=color:#66d9ef>public</span> String <span style=color:#a6e22e>name</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+        <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>origin</span><span style=color:#f92672>.</span><span style=color:#a6e22e>name</span><span style=color:#f92672>();</span>
+    <span style=color:#f92672>}</span>
+
+    <span style=color:#a6e22e>@Override</span>
+    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>boolean</span> <span style=color:#a6e22e>equals</span><span style=color:#f92672>(</span><span style=color:#66d9ef>final</span> Object obj<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+        <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>boolean</span> same<span style=color:#f92672>;</span>
+        <span style=color:#66d9ef>if</span> <span style=color:#f92672>(</span>obj <span style=color:#66d9ef>instanceof</span> EqUser<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+            <span style=color:#66d9ef>final</span> User other <span style=color:#f92672>=</span> <span style=color:#f92672>(</span>User<span style=color:#f92672>)</span> obj<span style=color:#f92672>;</span>
+            same <span style=color:#f92672>=</span> Objects<span style=color:#f92672>.</span><span style=color:#a6e22e>equals</span><span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>uid</span><span style=color:#f92672>(),</span> other<span style=color:#f92672>.</span><span style=color:#a6e22e>uid</span><span style=color:#f92672>());</span>
+        <span style=color:#f92672>}</span> <span style=color:#66d9ef>else</span> <span style=color:#f92672>{</span>
+            same <span style=color:#f92672>=</span> <span style=color:#66d9ef>false</span><span style=color:#f92672>;</span>
+        <span style=color:#f92672>}</span>
+        <span style=color:#66d9ef>return</span> same<span style=color:#f92672>;</span>
+    <span style=color:#f92672>}</span>
+
+    <span style=color:#a6e22e>@Override</span>
+    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>hashCode</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+        <span style=color:#66d9ef>return</span> Objects<span style=color:#f92672>.</span><span style=color:#a6e22e>hash</span><span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>origin</span><span style=color:#f92672>.</span><span style=color:#a6e22e>uid</span><span style=color:#f92672>());</span>
+    <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>as <code>Object.equals</code> protocol is based on &ldquo;verbal arrangements&rdquo;, our implementation
+also assumes that <code>User.uid</code> implements correctly <code>equals</code> and <code>hashCode</code>, it&rsquo;s <code>String</code>
+in this case, so we can be sure that it&rsquo;s true.
+Let&rsquo;s check java equality requirements:</p><ul><li>this implementation is &ldquo;reflexive&rdquo;: <code>x.equals(x) == true</code> because <code>x.uid().equals(x.uid()) == true</code></li><li>it is &ldquo;symmetric&rdquo;: if <code>x.equals(y)</code> is <code>true</code> then <code>y.equals(x)</code> is <code>true</code> also, because
+<code>EqUser</code> accepts only <code>EqUser</code> implementations as other object,
+so it can be converted to if <code>x.uid().equals(y.uid())</code> is <code>true</code> then <code>y.uid().equals(x.uid())</code>
+is <code>true</code> also</li><li>it is &ldquo;transitive&rdquo;: if <code>x.equals(y) && y.equals(z)</code> then <code>x.equals(z)</code>, because when
+<code>x.equals(y) && y.equals(z)</code> so <code>x.uid().equals(y.uid()) && y.uid().equals(z.uid())</code> and
+<code>x.uid().equals(z.uid())</code> what means that <code>x.equals(z)</code></li><li>it is &ldquo;consistent&rdquo;: we assume that <code>x.uid()</code> is consistent</li></ul><h2 id=example>Example</h2><p>And an example now. For instance we need to store user permissions as strings
+and grant them to some user but we can&rsquo;t be assure what <code>User</code> implementation
+we might be handling with:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>final</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Permissions</span> <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>final</span> Map<span style=color:#f92672>&lt;</span>User<span style=color:#f92672>,</span> Set<span style=color:#f92672>&lt;</span>String<span style=color:#f92672>&gt;&gt;</span> map <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> HashSet<span style=color:#f92672>&lt;&gt;();</span>
+
+  <span style=color:#75715e>/**
+</span><span style=color:#75715e>   * Check user has permission.
+</span><span style=color:#75715e>   */</span>
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>boolean</span> <span style=color:#a6e22e>has</span><span style=color:#f92672>(</span><span style=color:#66d9ef>final</span> User user<span style=color:#f92672>,</span>
+    <span style=color:#66d9ef>final</span> String permission<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>final</span> EqUser key <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> EqUser<span style=color:#f92672>(</span>user<span style=color:#f92672>);</span>
+    <span style=color:#66d9ef>return</span> map<span style=color:#f92672>.</span><span style=color:#a6e22e>contains</span><span style=color:#f92672>(</span>key<span style=color:#f92672>)</span> <span style=color:#f92672>&amp;&amp;</span>
+      map<span style=color:#f92672>.</span><span style=color:#a6e22e>get</span><span style=color:#f92672>(</span>key<span style=color:#f92672>).</span><span style=color:#a6e22e>contains</span><span style=color:#f92672>(</span>permission<span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+
+  <span style=color:#75715e>/**
+</span><span style=color:#75715e>   * Grant permission to the user.
+</span><span style=color:#75715e>   */</span>
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>grant</span><span style=color:#f92672>(</span><span style=color:#66d9ef>final</span> User user<span style=color:#f92672>,</span>
+    <span style=color:#66d9ef>final</span> String permission<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>final</span> EqUser key <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> EqUser<span style=color:#f92672>(</span>user<span style=color:#f92672>);</span>
+    <span style=color:#66d9ef>final</span> Set<span style=color:#f92672>&lt;</span>String<span style=color:#f92672>&gt;</span> set<span style=color:#f92672>;</span>
+    <span style=color:#66d9ef>if</span> <span style=color:#f92672>(!</span>map<span style=color:#f92672>.</span><span style=color:#a6e22e>contains</span><span style=color:#f92672>(</span>key<span style=color:#f92672>))</span> <span style=color:#f92672>{</span>
+      set <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> HashSet<span style=color:#f92672>&lt;&gt;();</span>
+      map<span style=color:#f92672>.</span><span style=color:#a6e22e>put</span><span style=color:#f92672>(</span>key<span style=color:#f92672>,</span> set<span style=color:#f92672>);</span>
+    <span style=color:#f92672>}</span> <span style=color:#66d9ef>else</span> <span style=color:#f92672>{</span>
+      set <span style=color:#f92672>=</span> map<span style=color:#f92672>.</span><span style=color:#a6e22e>get</span><span style=color:#f92672>(</span>key<span style=color:#f92672>);</span>
+    <span style=color:#f92672>}</span>
+    set<span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><span style=color:#f92672>(</span>permission<span style=color:#f92672>);</span>
+ <span style=color:#f92672>}</span> 
+<span style=color:#f92672>}</span>
+</code></pre></div><p>so we can grant user permission with one type:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>permissions<span style=color:#f92672>.</span><span style=color:#a6e22e>grant</span><span style=color:#f92672>(</span>
+  <span style=color:#66d9ef>new</span> RqUser<span style=color:#f92672>(</span>users<span style=color:#f92672>,</span> request<span style=color:#f92672>),</span> <span style=color:#e6db74>&#34;read&#34;</span>
+<span style=color:#f92672>);</span> <span style=color:#75715e>// grant &#39;read&#39; permission to current user
+</span></code></pre></div><p>and then check it with any other implementation:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java>SqlUsers users<span style=color:#f92672>;</span>
+<span style=color:#66d9ef>if</span> <span style=color:#f92672>(</span>permissions<span style=color:#f92672>.</span><span style=color:#a6e22e>has</span><span style=color:#f92672>(</span>users<span style=color:#f92672>.</span><span style=color:#a6e22e>user</span><span style=color:#f92672>(</span>id<span style=color:#f92672>),</span> <span style=color:#e6db74>&#34;read&#34;</span><span style=color:#f92672>))</span> <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>return</span> data<span style=color:#f92672>.</span><span style=color:#a6e22e>readAllBytes</span><span style=color:#f92672>();</span>
+<span style=color:#f92672>}</span>
+</code></pre></div></div><footer></footer></article></section></div><footer class=footer><section class=container><p>g4s8.public@gmail.com</p>© 2020</section></footer></main><script type=application/javascript>var doNotTrack=false;if(!doNotTrack){(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create','UA-93683398-3','auto');ga('send','pageview');}</script></body></html>

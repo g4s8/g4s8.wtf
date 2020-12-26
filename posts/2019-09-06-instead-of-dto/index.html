@@ -1,0 +1,200 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=author content="Kirill Che."><meta name=description content="Kirill Che (g4s8) personal website"><meta name=keywords content="blog,developer,personal,g4s8"><meta name=twitter:card content="summary"><meta name=twitter:title content="Instead of DTO"><meta name=twitter:description content="Objects use data messages to communicate with each other. It means that object methods can accept some data, but data structure sometimes is too complex. When complex data message is designed wrongly it tends to reduce maintainability because it becomes harder to test this code, and harder to read and understand it. Many people use DTOsfor object messages, just because it&rsquo;s easier to implement, but this code will be less readable in future and has a lot of hidden drawbacks, e."><meta property="og:title" content="Instead of DTO"><meta property="og:description" content="Objects use data messages to communicate with each other. It means that object methods can accept some data, but data structure sometimes is too complex. When complex data message is designed wrongly it tends to reduce maintainability because it becomes harder to test this code, and harder to read and understand it. Many people use DTOsfor object messages, just because it&rsquo;s easier to implement, but this code will be less readable in future and has a lot of hidden drawbacks, e."><meta property="og:type" content="article"><meta property="og:url" content="https://www.g4s8.wtf/posts/2019-09-06-instead-of-dto/"><meta property="article:published_time" content="2019-09-06T00:00:00+00:00"><meta property="article:modified_time" content="2019-09-06T00:00:00+00:00"><base href=https://www.g4s8.wtf/posts/2019-09-06-instead-of-dto/><title>Instead of DTO · Kirill Che. (g4s8)</title><link rel=canonical href=https://www.g4s8.wtf/posts/2019-09-06-instead-of-dto/><link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CMerriweather:300,700%7CSource+Code+Pro:400,700" rel=stylesheet><link rel=stylesheet href=https://use.fontawesome.com/releases/v5.8.1/css/all.css integrity=sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf crossorigin=anonymous><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin=anonymous><link rel=stylesheet href=/css/coder.min.28d751104f30c16da1aa1bb04015cbe662cacfe0d1b01af4f2240ad58580069c.css integrity="sha256-KNdREE8wwW2hqhuwQBXL5mLKz+DRsBr08iQK1YWABpw=" crossorigin=anonymous media=screen><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-32x32.png sizes=32x32><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-16x16.png sizes=16x16><meta name=generator content="Hugo 0.78.1"></head><body><main class=wrapper><nav class=navigation><section class=container><a class=navigation-title href=/>Kirill Che. (g4s8)</a>
+<input type=checkbox id=menu-toggle>
+<label class="menu-button float-right" for=menu-toggle><i class="fas fa-bars"></i></label><ul class=navigation-list><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/about/>About</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/posts/>Blog</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/contact/>Contact me</a></li></ul></section></nav><div class=content><section class="container post"><article><header><div class=post-title><h1 class=title>Instead of DTO</h1></div><div class=post-meta><div class=date><span class=posted-on><i class="fas fa-calendar"></i><time datetime=2019-09-06T00:00:00Z>September 6, 2019</time></span>
+<span class=reading-time><i class="fas fa-clock"></i>6 minutes read</span></div></div></header><div><p>Objects use data messages to communicate with each other.
+It means that object methods can accept some data, but data structure
+sometimes is too complex. When complex data message is designed wrongly
+it tends to reduce maintainability because it becomes harder to test this code,
+and harder to read and understand it.
+Many people use
+DTOs
+for object messages, just because it&rsquo;s easier to
+implement, but this code will be less readable in future and has a lot of
+hidden drawbacks, e.g.
+broken encapsulation.
+Instead of this, data languages should be used for complex data structures.
+It moves data definitions from source code and lets the code encapsulate
+the data and concentrate on the object&rsquo;s behavior.</p><h2 id=the-problem>The problem</h2><p>One of the examples of complex data format is when you have a service with multiple implementations
+which should receive some data to process. Let&rsquo;s take an email message with a service to send as an example
+for this post. In this example the email message can be send in two different ways: via SMTP service
+or via external API.
+The wrong way (but quite popular) is to present an email as a DTO class and accept it
+in message sender interface:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MailDTO</span> <span style=color:#f92672>{</span>
+  String subject<span style=color:#f92672>;</span>
+  String body<span style=color:#f92672>;</span>
+  String address<span style=color:#f92672>;</span>
+  Iterable<span style=color:#f92672>&lt;</span>String<span style=color:#f92672>&gt;</span> cc<span style=color:#f92672>;</span>
+  Iterable<span style=color:#f92672>&lt;</span><span style=color:#66d9ef>byte</span><span style=color:#f92672>[]&gt;</span> attachments<span style=color:#f92672>;</span>
+  String signature<span style=color:#f92672>;</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#66d9ef>interface</span> <span style=color:#a6e22e>MailService</span> <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>send</span><span style=color:#f92672>(</span>MailDTO mail<span style=color:#f92672>);</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>People usually use getters and setters for DTO instead of public fields
+but I don&rsquo;t see any difference comparing to &ldquo;all-public-fields&rdquo; DTO.
+It&rsquo;s not actually an object, but data-holder. This class breaks encapsulation
+and is not testable. It makes it harder to write unit tests for <code>MailService</code> implementation,
+because you don&rsquo;t actually know which DTO fields will be used internally and you always need
+to construct a working copy of this class for each unit test. In
+worst case scenario
+this DTO comes from external library. It has private fields with public getters and it&rsquo;s constructed
+internally using reflection
+so it&rsquo;s not possible to test DTO receivers without some dirt in tests like
+Mockito or reflection. It&rsquo;s really hard to
+maintain such tests, just look at this code to understand why:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#a6e22e>@Test</span>
+<span style=color:#66d9ef>void</span> <span style=color:#a6e22e>sendsMailViaSmtp</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+  MailDTO mail <span style=color:#f92672>=</span> Mockito<span style=color:#f92672>.</span><span style=color:#a6e22e>mock</span><span style=color:#f92672>(</span>MailDTO<span style=color:#f92672>.</span><span style=color:#a6e22e>class</span><span style=color:#f92672>);</span>
+  Mockito<span style=color:#f92672>.</span><span style=color:#a6e22e>when</span><span style=color:#f92672>(</span>mail<span style=color:#f92672>.</span><span style=color:#a6e22e>getAddress</span><span style=color:#f92672>()).</span><span style=color:#a6e22e>thenReturn</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;qwe@asd.com&#34;</span><span style=color:#f92672>);</span>
+  Mockito<span style=color:#f92672>.</span><span style=color:#a6e22e>when</span><span style=color:#f92672>(</span>mail<span style=color:#f92672>.</span><span style=color:#a6e22e>getBody</span><span style=color:#f92672>()).</span><span style=color:#a6e22e>thenReturn</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;hello&#34;</span><span style=color:#f92672>);</span>
+  Mockito<span style=color:#f92672>.</span><span style=color:#a6e22e>when</span><span style=color:#f92672>(</span>mail<span style=color:#f92672>.</span><span style=color:#a6e22e>getCcList</span><span style=color:#f92672>()).</span><span style=color:#a6e22e>thenReturn</span><span style=color:#f92672>(</span>ccList<span style=color:#f92672>);</span>
+  Mockito<span style=color:#f92672>.</span><span style=color:#a6e22e>when</span><span style=color:#f92672>(</span>mail<span style=color:#f92672>.</span><span style=color:#a6e22e>getAttachments</span><span style=color:#f92672>()).</span><span style=color:#a6e22e>thenReturn</span><span style=color:#f92672>(</span>attachments<span style=color:#f92672>);</span>
+  Mockito<span style=color:#f92672>.</span><span style=color:#a6e22e>when</span><span style=color:#f92672>(</span>mail<span style=color:#f92672>.</span><span style=color:#a6e22e>getSignature</span><span style=color:#f92672>()).</span><span style=color:#a6e22e>thenReturn</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;test&#34;</span><span style=color:#f92672>);</span>
+  <span style=color:#66d9ef>new</span> SmtpService<span style=color:#f92672>(...).</span><span style=color:#a6e22e>send</span><span style=color:#f92672>(</span>mail<span style=color:#f92672>);</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>Instead of focusing toward testing the logic, programmer has to read or write a dosen of
+mocking lines. You need to
+stop mocking if you want to make your tests clearer.</p><p>Another huge problem of this DTO is
+broken encapsulation:
+it&rsquo;s pretty fine for procedural code to use DTO, since this paradigm requires data to be open, but this post is
+about OOP, where encapsulation is one of the
+core principles.</p><h2 id=solution>Solution</h2><p>The correct way for this example will be:</p><ul><li>hide the data by encapsulation it as an object&rsquo;s state</li><li>revert communication direction (from &ldquo;service is sending mail&rdquo; to &ldquo;mail sends itself via service&rdquo;)</li><li>and use data languages to communicate with mail services</li></ul><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>interface</span> <span style=color:#a6e22e>Mail</span> <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>send</span><span style=color:#f92672>(</span>MailService srv<span style=color:#f92672>);</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#66d9ef>interface</span> <span style=color:#a6e22e>MailService</span> <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>accept</span><span style=color:#f92672>(</span>XML message<span style=color:#f92672>);</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>I&rsquo;m suggesting to build custom data protocols, when complex data structures should be passed between objects.
+In this example I&rsquo;ll use
+XML
+to pass data from mail to service,
+it has some advantages over previous solutions:</p><ul><li>validation - we can enforce the protocol with <code>xsd</code> schemas and fail method <code>accept()</code> if xml is invalid</li><li>queries - <code>MailService</code> can use xpath queries to access the data</li><li>readability - XML has readable format, so it&rsquo;s easier to view XML file instead of using debugger to inspect DTO instances</li><li>allows you to build complex data structures - XML is a flexible language to define complex data structures</li><li>transformations - XML data structure can be transformed using <code>xsl</code> transformations</li><li>flexibility - a mail object can construct a data message from internal state, or decorate existing object
+to put additional data.</li></ul><p>The disatvantages are:</p><ul><li>complexity - it&rsquo;s too complex for simple data structures</li><li>knowledge - it requires additional knowledge in XML language to design such structures</li></ul><p>It&rsquo;s better to start with <code>xsd</code> schema to define data structure, but
+it&rsquo;ll be over-complex for a simple blog post, so I skip it here.
+If you are not familiar with <code>xsd</code> schemas you may start learning them
+here: <a href=https://www.w3schools.com/xml/schema_intro.asp>www.w3schools.com</a></p><p>To pass it to <code>MailService</code> we can use <code>XML</code> object from
+jcabi-xml:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>void</span> <span style=color:#a6e22e>accept</span><span style=color:#f92672>(</span>XML data<span style=color:#f92672>);</span>
+</code></pre></div><p>So now, mail services can use xpath queries to query the data:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MailSmtp</span> <span style=color:#66d9ef>implements</span> MailService <span style=color:#f92672>{</span>
+
+    <span style=color:#a6e22e>@Override</span>
+    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>accept</span><span style=color:#f92672>(</span><span style=color:#66d9ef>final</span> XML mail<span style=color:#f92672>)</span>
+        <span style=color:#66d9ef>throws</span> IOException <span style=color:#f92672>{</span>
+        <span style=color:#66d9ef>final</span> String address <span style=color:#f92672>=</span> mail<span style=color:#f92672>.</span><span style=color:#a6e22e>xpath</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;/mail/recipient/text()&#34;</span><span style=color:#f92672>).</span><span style=color:#a6e22e>get</span><span style=color:#f92672>(</span>0<span style=color:#f92672>);</span>
+        <span style=color:#66d9ef>final</span> String subject <span style=color:#f92672>=</span> mail<span style=color:#f92672>.</span><span style=color:#a6e22e>xpath</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;/mail/subject/text()&#34;</span><span style=color:#f92672>).</span><span style=color:#a6e22e>get</span><span style=color:#f92672>(</span>0<span style=color:#f92672>);</span>
+        <span style=color:#66d9ef>final</span> List<span style=color:#f92672>&lt;</span>String<span style=color:#f92672>&gt;</span> ccs <span style=color:#f92672>=</span> mail<span style=color:#f92672>.</span><span style=color:#a6e22e>xpath</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;/mail/ccs/cc&#34;</span><span style=color:#f92672>);</span>
+        <span style=color:#75715e>// TODO: send via SMTP
+</span><span style=color:#75715e></span>    <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>On the other hand, <code>Mail</code> implementations can use
+Xembly
+language to build <code>XML</code> object message using directives
+(pay attention: this class doesn&rsquo;t expose internals and doesn&rsquo;t break encapsulation, it rather
+constructs a message to another object using internal state):</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MailSimple</span> <span style=color:#66d9ef>implements</span> Mail <span style=color:#f92672>{</span>
+
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> String subj<span style=color:#f92672>;</span>
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> String text<span style=color:#f92672>;</span>
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> String address<span style=color:#f92672>;</span>
+
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>post</span><span style=color:#f92672>(</span><span style=color:#66d9ef>final</span> MailService svc<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    svc<span style=color:#f92672>.</span><span style=color:#a6e22e>accept</span><span style=color:#f92672>(</span>
+      <span style=color:#66d9ef>new</span> AsXml<span style=color:#f92672>(</span>
+        <span style=color:#66d9ef>new</span> Directives<span style=color:#f92672>()</span>
+          <span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;mail&#34;</span><span style=color:#f92672>)</span>
+          <span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;subject&#34;</span><span style=color:#f92672>).</span><span style=color:#a6e22e>set</span><span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>subj</span><span style=color:#f92672>).</span><span style=color:#a6e22e>up</span><span style=color:#f92672>()</span>
+          <span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;address&#34;</span><span style=color:#f92672>).</span><span style=color:#a6e22e>set</span><span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>address</span><span style=color:#f92672>).</span><span style=color:#a6e22e>up</span><span style=color:#f92672>()</span>
+          <span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;body&#34;</span><span style=color:#f92672>)</span>
+          <span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;text&#34;</span><span style=color:#f92672>).</span><span style=color:#a6e22e>set</span><span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>text</span><span style=color:#f92672>).</span><span style=color:#a6e22e>up</span><span style=color:#f92672>()</span>
+      <span style=color:#f92672>)</span>
+    <span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>The idea is simple - hide the data in <code>Mail</code> object, build XML in <code>Mail</code> implementations
+from encapsulated state and pass it to <code>accept()</code> of <code>MailService</code>:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>new</span> MailSimple<span style=color:#f92672>(</span>
+  <span style=color:#e6db74>&#34;Test mail&#34;</span><span style=color:#f92672>,</span>
+  <span style=color:#e6db74>&#34;Hello&#34;</span><span style=color:#f92672>,</span>
+  <span style=color:#e6db74>&#34;test@test.com&#34;</span>
+<span style=color:#f92672>).</span><span style=color:#a6e22e>post</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> Smpt<span style=color:#f92672>(</span>connection<span style=color:#f92672>));</span>
+</code></pre></div><p>One of the advantages is flexibility:
+these classes are easy to wrap, e.g. here is a decorator to add CCs to
+origin mail:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MailWithCC</span> <span style=color:#66d9ef>implements</span> Mail <span style=color:#f92672>{</span>
+
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> Mail origin<span style=color:#f92672>;</span>
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> Iterable<span style=color:#f92672>&lt;</span>String<span style=color:#f92672>&gt;</span> ccs<span style=color:#f92672>;</span>
+
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>post</span><span style=color:#f92672>(</span><span style=color:#66d9ef>final</span> MailService svc<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>origin</span><span style=color:#f92672>.</span><span style=color:#a6e22e>post</span><span style=color:#f92672>(</span>
+      mail <span style=color:#f92672>-&gt;</span> svc<span style=color:#f92672>.</span><span style=color:#a6e22e>accept</span><span style=color:#f92672>(</span>
+        <span style=color:#66d9ef>new</span> AsXml<span style=color:#f92672>(</span>
+          <span style=color:#66d9ef>new</span> Directives<span style=color:#f92672>(</span>Directives<span style=color:#f92672>.</span><span style=color:#a6e22e>copyOf</span><span style=color:#f92672>(</span>mail<span style=color:#f92672>.</span><span style=color:#a6e22e>node</span><span style=color:#f92672>()))</span>
+            <span style=color:#f92672>.</span><span style=color:#a6e22e>xpath</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;/mail&#34;</span><span style=color:#f92672>)</span>
+            <span style=color:#f92672>.</span><span style=color:#a6e22e>addIf</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;ccs&#34;</span><span style=color:#f92672>)</span>
+            <span style=color:#f92672>.</span><span style=color:#a6e22e>append</span><span style=color:#f92672>(</span>
+              <span style=color:#66d9ef>new</span> IoCheckedScalar<span style=color:#f92672>&lt;&gt;(</span>
+                <span style=color:#66d9ef>new</span> Reduced<span style=color:#f92672>&lt;&gt;(</span>
+                  <span style=color:#66d9ef>new</span> Directives<span style=color:#f92672>(),</span>
+                  <span style=color:#f92672>(</span>dirs<span style=color:#f92672>,</span> cc<span style=color:#f92672>)</span> <span style=color:#f92672>-&gt;</span> dirs<span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;cc&#34;</span><span style=color:#f92672>).</span><span style=color:#a6e22e>set</span><span style=color:#f92672>(</span>cc<span style=color:#f92672>).</span><span style=color:#a6e22e>up</span><span style=color:#f92672>(),</span>
+                  <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>ccs</span>
+                <span style=color:#f92672>)</span>
+              <span style=color:#f92672>).</span><span style=color:#a6e22e>value</span><span style=color:#f92672>()</span>
+            <span style=color:#f92672>)</span>
+        <span style=color:#f92672>)</span>
+      <span style=color:#f92672>)</span>
+    <span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>This class will add CC-list to existing mail by updating XML data:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>new</span> MailWithCC<span style=color:#f92672>(</span>
+  <span style=color:#66d9ef>new</span> MailSimple<span style=color:#f92672>(</span>
+    <span style=color:#e6db74>&#34;Test mail&#34;</span><span style=color:#f92672>,</span>
+    <span style=color:#e6db74>&#34;Hello&#34;</span><span style=color:#f92672>,</span>
+    <span style=color:#e6db74>&#34;test@test.com&#34;</span>
+  <span style=color:#f92672>),</span>
+  <span style=color:#e6db74>&#34;copy@test.com&#34;</span>
+<span style=color:#f92672>).</span><span style=color:#a6e22e>post</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> Smpt<span style=color:#f92672>(</span>connection<span style=color:#f92672>));</span>
+</code></pre></div><p>Or service itself can be decorated in a similar way:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>WithCc</span> <span style=color:#66d9ef>implements</span> MailService <span style=color:#f92672>{</span>
+
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> MailService origin<span style=color:#f92672>;</span>
+
+  <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>accept</span><span style=color:#f92672>(</span>XML message<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    origin<span style=color:#f92672>.</span><span style=color:#a6e22e>accept</span><span style=color:#f92672>(</span>
+      <span style=color:#66d9ef>new</span> AsXml<span style=color:#f92672>(</span>
+        <span style=color:#66d9ef>new</span> Directives<span style=color:#f92672>(</span>Directives<span style=color:#f92672>.</span><span style=color:#a6e22e>copyOf</span><span style=color:#f92672>(</span>mail<span style=color:#f92672>.</span><span style=color:#a6e22e>node</span><span style=color:#f92672>()))</span>
+          <span style=color:#f92672>.</span><span style=color:#a6e22e>xpath</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;/mail&#34;</span><span style=color:#f92672>)</span>
+          <span style=color:#f92672>.</span><span style=color:#a6e22e>addIf</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;ccs&#34;</span><span style=color:#f92672>)</span>
+          <span style=color:#f92672>.</span><span style=color:#a6e22e>append</span><span style=color:#f92672>(</span>
+            <span style=color:#66d9ef>new</span> IoCheckedScalar<span style=color:#f92672>&lt;&gt;(</span>
+              <span style=color:#66d9ef>new</span> Reduced<span style=color:#f92672>&lt;&gt;(</span>
+                <span style=color:#66d9ef>new</span> Directives<span style=color:#f92672>(),</span>
+                <span style=color:#f92672>(</span>dirs<span style=color:#f92672>,</span> cc<span style=color:#f92672>)</span> <span style=color:#f92672>-&gt;</span> dirs<span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;cc&#34;</span><span style=color:#f92672>).</span><span style=color:#a6e22e>set</span><span style=color:#f92672>(</span>cc<span style=color:#f92672>).</span><span style=color:#a6e22e>up</span><span style=color:#f92672>(),</span>
+                <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>ccs</span>
+              <span style=color:#f92672>)</span>
+            <span style=color:#f92672>).</span><span style=color:#a6e22e>value</span><span style=color:#f92672>()</span>
+          <span style=color:#f92672>)</span>
+      <span style=color:#f92672>)</span>
+    <span style=color:#f92672>)</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>Another important advantage of this approach is that it&rsquo;s easy to unit-test
+these classes:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#a6e22e>@Test</span>
+<span style=color:#66d9ef>void</span> <span style=color:#a6e22e>appendsCcs</span><span style=color:#f92672>()</span> <span style=color:#66d9ef>throws</span> Exception <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>new</span> MailWithCC<span style=color:#f92672>(</span>
+    <span style=color:#66d9ef>new</span> Mail<span style=color:#f92672>.</span><span style=color:#a6e22e>FAKE</span><span style=color:#f92672>,</span>
+    <span style=color:#66d9ef>new</span> ListOf<span style=color:#f92672>&lt;&gt;(</span><span style=color:#e6db74>&#34;copy@test.com&#34;</span><span style=color:#f92672>)</span>
+  <span style=color:#f92672>).</span><span style=color:#a6e22e>post</span><span style=color:#f92672>(</span>
+    mail <span style=color:#f92672>-&gt;</span> MatcherAssert<span style=color:#f92672>.</span><span style=color:#a6e22e>assertThat</span><span style=color:#f92672>(</span>
+      mail<span style=color:#f92672>.</span><span style=color:#a6e22e>node</span><span style=color:#f92672>(),</span>
+      XhtmlMatchers<span style=color:#f92672>.</span><span style=color:#a6e22e>hasXPaths</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;/mail/ccs/cc[./text() = &#39;copy@test.com&#39;]&#34;</span><span style=color:#f92672>)</span>
+    <span style=color:#f92672>)</span>
+  <span style=color:#f92672>);</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>When you change your data format (and update <code>xsd</code> schema), you may write an
+<code>xsl</code> transformation to update the old version to new one on &ldquo;data side&rdquo;, so you just change
+the code to support only the new format and apply transformations to convert the old data.</p><h2 id=conclusion>Conclusion</h2><p>To summarize it all - we&rsquo;re spending more time on implementation, since we need
+to write all these schemas, xml manipulators, etc., but saving much more time
+on maintaining the code and making it more readable. But you always should think
+about the balance between the cost of implementing and cost of maintaining:
+I&rsquo;d never use XML language for simple data messages, e.g. if by business requirements
+a mail can contain only a message and address, nothing more; it would be easier to
+put these properties right in the method, since creating XML definitions for that case will
+be too expensive for the project.</p></div><footer></footer></article></section></div><footer class=footer><section class=container><p>g4s8.public@gmail.com</p>© 2020</section></footer></main><script type=application/javascript>var doNotTrack=false;if(!doNotTrack){(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create','UA-93683398-3','auto');ga('send','pageview');}</script></body></html>

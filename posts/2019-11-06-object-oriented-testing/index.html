@@ -1,0 +1,116 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=author content="Kirill Che."><meta name=description content="Kirill Che (g4s8) personal website"><meta name=keywords content="blog,developer,personal,g4s8"><meta name=twitter:card content="summary"><meta name=twitter:title content="Testing Object Oriented Code"><meta name=twitter:description content="Any self-respecting programmer must have a blog post about unit testing. There are many approaches to write unit tests, but I&rsquo;ll focus on writing tests for EO code, where objects are immutable, sealed and behavior-based. These restrictions make unit-testing much easier than testing procedural code with DTOs, getters and mutable states. The only thing that an object oriented test should verify is the correct behavior of an object with the provided testing state (fake state)."><meta property="og:title" content="Testing Object Oriented Code"><meta property="og:description" content="Any self-respecting programmer must have a blog post about unit testing. There are many approaches to write unit tests, but I&rsquo;ll focus on writing tests for EO code, where objects are immutable, sealed and behavior-based. These restrictions make unit-testing much easier than testing procedural code with DTOs, getters and mutable states. The only thing that an object oriented test should verify is the correct behavior of an object with the provided testing state (fake state)."><meta property="og:type" content="article"><meta property="og:url" content="https://www.g4s8.wtf/posts/2019-11-06-object-oriented-testing/"><meta property="article:published_time" content="2019-11-06T00:00:00+00:00"><meta property="article:modified_time" content="2019-11-06T00:00:00+00:00"><base href=https://www.g4s8.wtf/posts/2019-11-06-object-oriented-testing/><title>Testing Object Oriented Code · Kirill Che. (g4s8)</title><link rel=canonical href=https://www.g4s8.wtf/posts/2019-11-06-object-oriented-testing/><link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CMerriweather:300,700%7CSource+Code+Pro:400,700" rel=stylesheet><link rel=stylesheet href=https://use.fontawesome.com/releases/v5.8.1/css/all.css integrity=sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf crossorigin=anonymous><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin=anonymous><link rel=stylesheet href=/css/coder.min.28d751104f30c16da1aa1bb04015cbe662cacfe0d1b01af4f2240ad58580069c.css integrity="sha256-KNdREE8wwW2hqhuwQBXL5mLKz+DRsBr08iQK1YWABpw=" crossorigin=anonymous media=screen><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-32x32.png sizes=32x32><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-16x16.png sizes=16x16><meta name=generator content="Hugo 0.78.1"></head><body><main class=wrapper><nav class=navigation><section class=container><a class=navigation-title href=/>Kirill Che. (g4s8)</a>
+<input type=checkbox id=menu-toggle>
+<label class="menu-button float-right" for=menu-toggle><i class="fas fa-bars"></i></label><ul class=navigation-list><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/about/>About</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/posts/>Blog</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/contact/>Contact me</a></li></ul></section></nav><div class=content><section class="container post"><article><header><div class=post-title><h1 class=title>Testing Object Oriented Code</h1></div><div class=post-meta><div class=date><span class=posted-on><i class="fas fa-calendar"></i><time datetime=2019-11-06T00:00:00Z>November 6, 2019</time></span>
+<span class=reading-time><i class="fas fa-clock"></i>4 minutes read</span></div></div></header><div><p>Any self-respecting programmer must have a blog post about unit testing.
+There are many approaches to write unit tests, but I&rsquo;ll focus on
+writing tests for <a href=https://www.elegantobjects.org/>EO</a> code, where
+objects are immutable, sealed and behavior-based. These restrictions
+make unit-testing much easier than testing procedural code with DTOs,
+getters and mutable states. The only thing that an object oriented test
+should verify is the correct behavior of an object with the provided
+testing state (fake state).
+However, the procedural test (I mean the test for procedural code)
+should verify the data of class instance after some manipulations
+with injected mock objects for simulating behavior.</p><h2 id=key-concepts>Key concepts</h2><p>There are always three players in the unit-test:</p><ul><li>Target - an object which should be tested</li><li>Matcher - an object which tests the Target
+and can say what&rsquo;s wrong with target if test failed</li><li>Assertion - a statement which applies the matcher to the target
+and reports the result</li></ul><p><strong>Target</strong> should be an immutable object with a state and behavior.
+The unit test may inject the fake state, because it should
+verify only one unit (target). If test uses a composition of
+objects, it can be called an integration test.
+<em>Example:</em></p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Book</span> <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> List<span style=color:#f92672>&lt;</span>Page<span style=color:#f92672>&gt;</span> pages<span style=color:#f92672>;</span>
+
+  <span style=color:#66d9ef>public</span> Text <span style=color:#a6e22e>content</span><span style=color:#f92672>(</span><span style=color:#66d9ef>int</span> page<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>pages</span><span style=color:#f92672>.</span><span style=color:#a6e22e>get</span><span style=color:#f92672>(</span>page<span style=color:#f92672>).</span><span style=color:#a6e22e>show</span><span style=color:#f92672>();</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p><strong>Matcher</strong> contains expected result as a state
+and it accepts the target to verify it. Also, the matcher
+should be able to explain what&rsquo;s wrong with the target.
+<em>Example:</em></p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>BookHasPage</span> <span style=color:#66d9ef>implements</span> Matcher<span style=color:#f92672>&lt;</span>Book<span style=color:#f92672>&gt;</span> <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> Text expected<span style=color:#f92672>;</span>
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>int</span> page<span style=color:#f92672>;</span>
+
+  <span style=color:#66d9ef>public</span> bool <span style=color:#a6e22e>match</span><span style=color:#f92672>(</span>Book book<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>return</span> <span style=color:#f92672>!</span>Objects<span style=color:#f92672>.</span><span style=color:#a6e22e>equals</span><span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>expected</span><span style=color:#f92672>,</span> book<span style=color:#f92672>.</span><span style=color:#a6e22e>page</span><span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>page</span><span style=color:#f92672>));</span>
+  <span style=color:#f92672>}</span>
+
+  <span style=color:#66d9ef>public</span> String <span style=color:#a6e22e>explain</span><span style=color:#f92672>(</span>Book book<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+      <span style=color:#66d9ef>return</span> String<span style=color:#f92672>.</span><span style=color:#a6e22e>format</span><span style=color:#f92672>(</span>
+        <span style=color:#e6db74>&#34;expected the page %d of book to be %s, but was %s&#34;</span><span style=color:#f92672>,</span>
+        <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>page</span><span style=color:#f92672>,</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>expected</span><span style=color:#f92672>,</span> book<span style=color:#f92672>.</span><span style=color:#a6e22e>page</span><span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>page</span><span style=color:#f92672>)</span>
+      <span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>These concepts are implemented quite fine in
+<a href=http://hamcrest.org/JavaHamcrest/>Hamcrest</a> library.</p><h2 id=frameworks>Frameworks</h2><p>With <a href=https://junit.org/>JUnit</a> tests, programmers are forced to use test methods to
+apply assertions:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>TestCase</span> <span style=color:#f92672>{</span>
+  <span style=color:#a6e22e>@Test</span>
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>bookHasPage</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+    MatcherAssert<span style=color:#f92672>.</span><span style=color:#a6e22e>assertThat</span><span style=color:#f92672>(</span>
+      <span style=color:#66d9ef>new</span> Book<span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> FakePage<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;some test&#34;</span><span style=color:#f92672>)),</span>
+      <span style=color:#66d9ef>new</span> BookHasPage<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;some test&#34;</span><span style=color:#f92672>,</span> 1<span style=color:#f92672>)</span>
+    <span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>So the whole logic of the test is to verify the Target with Matcher
+using assertion.
+Valid EO test with JUnit is a
+<a href=https://www.yegor256.com/2017/05/17/single-statement-unit-tests.html>single statement of assertion</a>.</p><p>But there are are a few issues with test methods which I see:</p><ul><li>you can&rsquo;t control execution flow programmatically - you need to use some
+magic flags in <code>pom.xml</code>, but it&rsquo;s black magic)</li><li>you don&rsquo;t know how, when and why your test will be called.
+It&rsquo;s like a &ldquo;Spring&rdquo; of unit testing.
+The framework finds classes dynamically via reflection, parses annotations and decides how
+to call your test methods</li><li>test case is not an object, but a bunch of procedures. You can&rsquo;t control
+test case instantiation:
+you can&rsquo;t inject anything via constructor, you can&rsquo;t use composition, etc.</li><li>there is no single entry point (like <code>main()</code> method for Java apps),
+you need to rely on names of test classes.</li></ul><h2 id=single-object-unit-test>Single object unit test</h2><p>With that in mind we can rethink all unit testing from test methods to
+a test object, where the target and the matcher will be the state of a test-case object:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>SimpleTestCase</span><span style=color:#f92672>&lt;</span>T<span style=color:#f92672>&gt;</span> <span style=color:#66d9ef>implements</span> TestCase <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> String name<span style=color:#f92672>;</span>
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> Supplier<span style=color:#f92672>&lt;</span>T<span style=color:#f92672>&gt;</span> target<span style=color:#f92672>;</span>
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> Matcher<span style=color:#f92672>&lt;</span>T<span style=color:#f92672>&gt;</span> matcher<span style=color:#f92672>;</span>
+
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>run</span><span style=color:#f92672>(</span>Report report<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    T val <span style=color:#f92672>=</span> target<span style=color:#f92672>.</span><span style=color:#a6e22e>get</span><span style=color:#f92672>();</span>
+    <span style=color:#66d9ef>if</span> <span style=color:#f92672>(</span>matcher<span style=color:#f92672>.</span><span style=color:#a6e22e>match</span><span style=color:#f92672>(</span>val<span style=color:#f92672>))</span> <span style=color:#f92672>{</span>
+      report<span style=color:#f92672>.</span><span style=color:#a6e22e>success</span><span style=color:#f92672>(</span>name<span style=color:#f92672>);</span>
+    <span style=color:#f92672>}</span> <span style=color:#66d9ef>else</span> <span style=color:#f92672>{</span>
+      report<span style=color:#f92672>.</span><span style=color:#a6e22e>failure</span><span style=color:#f92672>(</span>name<span style=color:#f92672>,</span> matcher<span style=color:#f92672>.</span><span style=color:#a6e22e>explain</span><span style=color:#f92672>(</span>val<span style=color:#f92672>));</span>
+    <span style=color:#f92672>}</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>I saw a similar <a href=https://www.pragmaticobjects.com/chapters/003_reusable_assertions.html>idea</a>
+by <a href=https://github.com/skapral>@skapral</a>, but it solves only half of issues.
+There are no test methods anymore, but we stil need to rely on framework&rsquo;s black magic
+and create test classes for it in a hope that JUnit will find it and run as expected.</p><p>What I want to see in my test cases is a single entry point and
+composition of test cases with decorators. Something like this:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>MainTest</span> <span style=color:#66d9ef>extends</span> TestCase<span style=color:#f92672>.</span><span style=color:#a6e22e>Wrap</span> <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>public</span> <span style=color:#a6e22e>MainTest</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>super</span><span style=color:#f92672>(</span>
+      <span style=color:#66d9ef>new</span> SequentialTests<span style=color:#f92672>(</span>
+        <span style=color:#66d9ef>new</span> ParallelTests<span style=color:#f92672>(</span>
+          <span style=color:#66d9ef>new</span> FooTest<span style=color:#f92672>(),</span>
+          <span style=color:#66d9ef>new</span> ParTest<span style=color:#f92672>(),</span>
+          <span style=color:#66d9ef>new</span> VerboseTest<span style=color:#f92672>(</span>
+            <span style=color:#66d9ef>new</span> BazTest<span style=color:#f92672>()</span>
+          <span style=color:#f92672>)</span>
+        <span style=color:#f92672>),</span>
+        <span style=color:#66d9ef>new</span> TestIf<span style=color:#f92672>(</span>
+          <span style=color:#f92672>()</span> <span style=color:#f92672>-&gt;</span> System<span style=color:#f92672>.</span><span style=color:#a6e22e>getProperty</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;it-tests-enabled&#34;</span><span style=color:#f92672>)</span> <span style=color:#f92672>==</span> <span style=color:#66d9ef>true</span>
+          <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>IntegrationTests</span><span style=color:#f92672>()</span>
+        <span style=color:#f92672>)</span>
+      <span style=color:#f92672>)</span>
+    <span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+
+  <span style=color:#75715e>// it&#39;s like a `public static void main()`
+</span><span style=color:#75715e></span>  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>static</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>test</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>new</span> MainTest<span style=color:#f92672>().</span><span style=color:#a6e22e>run</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> XmlReport<span style=color:#f92672>());</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>Using composition I&rsquo;m getting the full control of testing flow:</p><ul><li>I can run some tests in parallel mode, some sequentially</li><li>I can control tests execution order if needed</li><li>I can use conditions right in composition structure</li><li>I can change reporting behavior</li><li>I can do anything with my unit tests, because the test framework is
+extensible now</li></ul><p>This kind of frameworks doesn&rsquo;t work as a black-box, but provides API
+to help me to construct tests for the project by myself.
+I created an experimental project <a href=https://github.com/g4s8/oot>g4s8/oot</a>
+for that framework, it should replace JUnit sooner or later. You can
+express your opinion in the comments to this blog post or by
+<a href=https://github.com/g4s8/oot/issues/new>submitting a ticket</a> for that repo.</p></div><footer></footer></article></section></div><footer class=footer><section class=container><p>g4s8.public@gmail.com</p>© 2020</section></footer></main><script type=application/javascript>var doNotTrack=false;if(!doNotTrack){(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create','UA-93683398-3','auto');ga('send','pageview');}</script></body></html>

@@ -1,0 +1,254 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=author content="Kirill Che."><meta name=description content="Kirill Che (g4s8) personal website"><meta name=keywords content="blog,developer,personal,g4s8"><meta name=twitter:card content="summary"><meta name=twitter:title content="Get rid of presenter"><meta name=twitter:description content="How to split platform depended views from domain logic and be able to unit-test them separately? There are few ways to do it, one of them is MVP (Model-View-Presenter)pattern. It gives us many advantages in Android system but has one major drawback in OOP world - a presenter.
+Why to split? You probably know that it&rsquo;s not so easy to unit-test contextdependend stuff like Activity, View etc. because these classes are a part of Android framework and they are loaded in runtime on device, each device may have different implementation of same classes."><meta property="og:title" content="Get rid of presenter"><meta property="og:description" content="How to split platform depended views from domain logic and be able to unit-test them separately? There are few ways to do it, one of them is MVP (Model-View-Presenter)pattern. It gives us many advantages in Android system but has one major drawback in OOP world - a presenter.
+Why to split? You probably know that it&rsquo;s not so easy to unit-test contextdependend stuff like Activity, View etc. because these classes are a part of Android framework and they are loaded in runtime on device, each device may have different implementation of same classes."><meta property="og:type" content="article"><meta property="og:url" content="https://www.g4s8.wtf/posts/2017-8-17-get-rid-of-presenter/"><meta property="article:published_time" content="2017-08-17T00:00:00+00:00"><meta property="article:modified_time" content="2017-08-17T00:00:00+00:00"><base href=https://www.g4s8.wtf/posts/2017-8-17-get-rid-of-presenter/><title>Get rid of presenter · Kirill Che. (g4s8)</title><link rel=canonical href=https://www.g4s8.wtf/posts/2017-8-17-get-rid-of-presenter/><link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CMerriweather:300,700%7CSource+Code+Pro:400,700" rel=stylesheet><link rel=stylesheet href=https://use.fontawesome.com/releases/v5.8.1/css/all.css integrity=sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf crossorigin=anonymous><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin=anonymous><link rel=stylesheet href=/css/coder.min.28d751104f30c16da1aa1bb04015cbe662cacfe0d1b01af4f2240ad58580069c.css integrity="sha256-KNdREE8wwW2hqhuwQBXL5mLKz+DRsBr08iQK1YWABpw=" crossorigin=anonymous media=screen><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-32x32.png sizes=32x32><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-16x16.png sizes=16x16><meta name=generator content="Hugo 0.78.1"></head><body><main class=wrapper><nav class=navigation><section class=container><a class=navigation-title href=/>Kirill Che. (g4s8)</a>
+<input type=checkbox id=menu-toggle>
+<label class="menu-button float-right" for=menu-toggle><i class="fas fa-bars"></i></label><ul class=navigation-list><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/about/>About</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/posts/>Blog</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/contact/>Contact me</a></li></ul></section></nav><div class=content><section class="container post"><article><header><div class=post-title><h1 class=title>Get rid of presenter</h1></div><div class=post-meta><div class=date><span class=posted-on><i class="fas fa-calendar"></i><time datetime=2017-08-17T00:00:00Z>August 17, 2017</time></span>
+<span class=reading-time><i class="fas fa-clock"></i>7 minutes read</span></div></div></header><div><p>How to split platform depended views from domain logic and be able to
+unit-test them separately? There are few ways to do it, one of them is
+MVP (Model-View-Presenter)
+pattern. It gives us many advantages in Android system but has one major drawback in OOP world - a presenter.</p><h2 id=why-to-split>Why to split?</h2><p>You probably know that it&rsquo;s not so easy to unit-test
+context
+dependend stuff like <code>Activity</code>, <code>View</code> etc. because these classes are a part of Android framework and
+they are loaded in runtime on device, each device may have different implementation of same classes. To test it you have to write
+Instrumentation tests
+and launch them on real device or emulator, another option is to use a framework that simulates an Android-SDK e.g. a
+Robolectric framework.
+This kind of tests is slow enough to run it on every build,
+therefore it&rsquo;s a good practice to keep our model independed of Android context to be able to write plain java
+JUnit tests for it.</p><h2 id=why-mvp>Why MVP?</h2><p>Why do I choose this particular pattern? Why not
+MVVM, or
+MVC?
+First of all (as I said before) I want to have an ability to test each part of my app independently. Second important criteria
+is loose coupling.
+This principles are reachable in MVP and MVVM patterns. MVC is off the menu - controller is a weak part here,
+we need to test it as an Android component (with instrumentation test), not only view.
+MVVM is better in case of unit testing, but I don&rsquo;t actually like this view-model part - it shares the state to
+pass data and events through self and it does not appear as a good object.
+MVP is the only pattern which passed the test. As for me this pattern has one
+big problem
+called &ldquo;presenter&rdquo; - it should present data
+from model in view and react to user interactions.
+but I think we can get rid of it and save all unit-testing advantages.</p><h2 id=view--model-services>View & Model Services</h2><p>MVP intends us to abstract away from view or model implementations and propagates interface usage instead of
+concrete view or model classes.
+So if we want to get rid of presenter we should put view and model at <strong>one level</strong> and think about them
+as two <strong>independent services</strong> - &ldquo;view service&rdquo; and &ldquo;model service&rdquo;. So presenter gets down to <strong>communication level</strong> and
+his only responsobility would be to deliver messages from view to model and vice versa.
+In this design the only way to communicate between services is to send messages conformed to public protocol
+and react to them when receiving.
+To simplify this connection we can define public protocols and write them as java interfaces.
+E.g. if we show some person info we can make such kind of protocols:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>interface</span> <span style=color:#a6e22e>View</span> <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>render</span><span style=color:#f92672>(</span>Person person<span style=color:#f92672>);</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#66d9ef>interface</span> <span style=color:#a6e22e>Model</span> <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>change</span><span style=color:#f92672>(</span>Name name<span style=color:#f92672>);</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><h2 id=service-messages>Service messages</h2><p>In Android world we have to pay attention in which thread code is executing. We can touch widget/controls only on UI-thread
+and we should execute IO operations in background threads to keep user interaction responsive. Usually presenter
+takes care of it. Here it will be handled by communication object too <em>(I&rsquo;m not sure that it&rsquo;s right design,
+but I tested this approach and didn&rsquo;t find any problems related to threads)</em>.
+Our services can&rsquo;t directly access each other, the only way to communicate
+is to send and receive messages. Each message will be called on specific thread.
+Lets define generic messages for these services. I&rsquo;d call them packets here</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>interface</span> <span style=color:#a6e22e>Packet</span><span style=color:#f92672>&lt;</span>T<span style=color:#f92672>&gt;</span> <span style=color:#f92672>{</span>
+  <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>apply</span><span style=color:#f92672>(</span>T protocol<span style=color:#f92672>);</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>if model wants to ask a view to show a person it can send this packet:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>PktShow</span> <span style=color:#66d9ef>implements</span> Packet<span style=color:#f92672>&lt;</span>View<span style=color:#f92672>&gt;</span> <span style=color:#f92672>{</span>
+  
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> Person person<span style=color:#f92672>;</span>
+  
+  <span style=color:#66d9ef>public</span> <span style=color:#a6e22e>PktShow</span><span style=color:#f92672>(</span>Person person<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>person</span> <span style=color:#f92672>=</span> person<span style=color:#f92672>;</span>
+  <span style=color:#f92672>}</span>
+
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>apply</span><span style=color:#f92672>(</span>View protocol<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    protocol<span style=color:#f92672>.</span><span style=color:#a6e22e>render</span><span style=color:#f92672>(</span>person<span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>and if a user edited a person&rsquo;s name a view can ask a model to change it with this message:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>PktChange</span> <span style=color:#66d9ef>implements</span> Packet<span style=color:#f92672>&lt;</span>Model<span style=color:#f92672>&gt;</span> <span style=color:#f92672>{</span>
+  
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> Name name<span style=color:#f92672>;</span>
+
+  <span style=color:#66d9ef>public</span> <span style=color:#a6e22e>PktChange</span><span style=color:#f92672>(</span>Name name<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>name</span> <span style=color:#f92672>=</span> name<span style=color:#f92672>;</span>
+  <span style=color:#f92672>}</span>
+
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>apply</span><span style=color:#f92672>(</span>Model protocol<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    protocol<span style=color:#f92672>.</span><span style=color:#a6e22e>change</span><span style=color:#f92672>(</span>name<span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>so we&rsquo;ve just declared messages as atomic unit of services communication.</p><h2 id=reactive-communications>Reactive communications</h2><p><em>I&rsquo;m writing it with RxJava-2 library to save a lot of time, but it can be implemented without it.</em>
+Now our view and model are independent services. Our model is responsible for consuming packets for <code>Model</code> protocol
+and at the same time it&rsquo;s a packet source for <code>View</code> protocol. Similar for view. In rx-java terms we can define model
+as a <code>Cosumer</code> for model packets and a <code>Source</code> for view packets:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>OurModel</span> <span style=color:#66d9ef>implements</span>
+  ObservableSource<span style=color:#f92672>&lt;</span>Packet<span style=color:#f92672>&lt;</span>View<span style=color:#f92672>&gt;&gt;,</span>
+  Consumer<span style=color:#f92672>&lt;</span>Packet<span style=color:#f92672>&lt;</span>Model<span style=color:#f92672>&gt;&gt;</span> <span style=color:#f92672>{</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#66d9ef>class</span> <span style=color:#a6e22e>OurView</span> <span style=color:#66d9ef>extends</span> android<span style=color:#f92672>.</span><span style=color:#a6e22e>widget</span><span style=color:#f92672>.</span><span style=color:#a6e22e>View</span> <span style=color:#66d9ef>implements</span>
+  ObservableSource<span style=color:#f92672>&lt;</span>Packet<span style=color:#f92672>&lt;</span>Model<span style=color:#f92672>&gt;&gt;,</span>
+  Consumer<span style=color:#f92672>&lt;</span>Packet<span style=color:#f92672>&lt;</span>View<span style=color:#f92672>&gt;&gt;</span> <span style=color:#f92672>{</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>Let&rsquo;s call them as <code>Service&lt;In, Out></code>:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>interface</span> <span style=color:#a6e22e>Service</span><span style=color:#f92672>&lt;</span>In<span style=color:#f92672>,</span> Out<span style=color:#f92672>&gt;</span> <span style=color:#66d9ef>extends</span>
+  ObservableSource<span style=color:#f92672>&lt;</span>Packet<span style=color:#f92672>&lt;</span>Out<span style=color:#f92672>&gt;&gt;,</span>
+  Consumer<span style=color:#f92672>&lt;</span>Packet<span style=color:#f92672>&lt;</span>In<span style=color:#f92672>&gt;&gt;</span> <span style=color:#f92672>{</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>Now our connection logic and service protocols are independent also. We can design our service as a single object:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#75715e>/**
+</span><span style=color:#75715e> * Model as a service.
+</span><span style=color:#75715e> */</span>
+<span style=color:#66d9ef>class</span> <span style=color:#a6e22e>OurModel</span> <span style=color:#66d9ef>implements</span>
+  Service<span style=color:#f92672>&lt;</span>Model<span style=color:#f92672>,</span> View<span style=color:#f92672>&gt;,</span>
+  Model <span style=color:#f92672>{</span>
+
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>accept</span><span style=color:#f92672>(</span>Packet<span style=color:#f92672>&lt;</span>Model<span style=color:#f92672>&gt;</span> packet<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    packet<span style=color:#f92672>.</span><span style=color:#a6e22e>apply</span><span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>or split connection logic and protocol logic into different classes:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#75715e>/**
+</span><span style=color:#75715e> * Model service.
+</span><span style=color:#75715e> */</span>
+<span style=color:#66d9ef>class</span> <span style=color:#a6e22e>ModelService</span> <span style=color:#66d9ef>implements</span> Service<span style=color:#f92672>&lt;</span>Model<span style=color:#f92672>,</span> View<span style=color:#f92672>&gt;</span> <span style=color:#f92672>{</span>
+
+  Model model<span style=color:#f92672>;</span>
+
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>apply</span><span style=color:#f92672>(</span>Packet<span style=color:#f92672>&lt;</span>Model<span style=color:#f92672>&gt;</span> packet<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    packet<span style=color:#f92672>.</span><span style=color:#a6e22e>apply</span><span style=color:#f92672>(</span>model<span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+
+<span style=color:#75715e>/**
+</span><span style=color:#75715e> * Model.
+</span><span style=color:#75715e> */</span>
+<span style=color:#66d9ef>class</span> <span style=color:#a6e22e>OurModel</span> <span style=color:#66d9ef>implements</span> Model <span style=color:#f92672>{</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><h2 id=instead-of-presenter>Instead of presenter</h2><p>As described previously presenter now has to do only one thing - send messages from view to model and from model to view.
+I&rsquo;d rename it to <code>Wire</code>.
+This wire can always be connected to service (read as: encapsulates model-service)
+and provide connection to view (I&rsquo;ll describe why later).
+I implemented it with rx also:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Wire</span> <span style=color:#f92672>{</span>
+
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> CompositeDisposable subscriptions <span style=color:#f92672>=</span>
+    <span style=color:#66d9ef>new</span> CompositeDisposable<span style=color:#f92672>();</span>
+  
+  <span style=color:#66d9ef>private</span> <span style=color:#66d9ef>final</span> Service<span style=color:#f92672>&lt;</span>Model<span style=color:#f92672>,</span> View<span style=color:#f92672>&gt;</span> modelService<span style=color:#f92672>;</span>
+
+  <span style=color:#66d9ef>public</span> <span style=color:#a6e22e>Wire</span><span style=color:#f92672>(</span>Service<span style=color:#f92672>&lt;</span>Model<span style=color:#f92672>,</span> View<span style=color:#f92672>&gt;</span> modelService<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>modelService</span> <span style=color:#f92672>=</span> modelService<span style=color:#f92672>;</span>
+  <span style=color:#f92672>}</span>
+
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>plugIn</span><span style=color:#f92672>(</span>Service<span style=color:#f92672>&lt;</span>View<span style=color:#f92672>,</span> Model<span style=color:#f92672>&gt;</span> viewService<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    subscriptions<span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><span style=color:#f92672>(</span>
+      Observable<span style=color:#f92672>.</span><span style=color:#a6e22e>wrap</span><span style=color:#f92672>(</span>modelService<span style=color:#f92672>)</span>
+        <span style=color:#f92672>.</span><span style=color:#a6e22e>observeOn</span><span style=color:#f92672>(</span>AndroidSchedulers<span style=color:#f92672>.</span><span style=color:#a6e22e>mainThread</span><span style=color:#f92672>())</span>
+        <span style=color:#f92672>.</span><span style=color:#a6e22e>subscribe</span><span style=color:#f92672>(</span>viewService<span style=color:#f92672>)</span>
+    <span style=color:#f92672>);</span>
+    subscriptions<span style=color:#f92672>.</span><span style=color:#a6e22e>add</span><span style=color:#f92672>(</span>
+      Observable<span style=color:#f92672>.</span><span style=color:#a6e22e>wrap</span><span style=color:#f92672>(</span>viewService<span style=color:#f92672>)</span>
+        <span style=color:#f92672>.</span><span style=color:#a6e22e>observeOn</span><span style=color:#f92672>(</span>Schedulers<span style=color:#f92672>.</span><span style=color:#a6e22e>io</span><span style=color:#f92672>())</span>
+        <span style=color:#f92672>.</span><span style=color:#a6e22e>subscribe</span><span style=color:#f92672>(</span>modelService<span style=color:#f92672>)</span>
+    <span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>unplug</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+    subscriptions<span style=color:#f92672>.</span><span style=color:#a6e22e>clear</span><span style=color:#f92672>();</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><h2 id=connect-to-framework-classes>Connect to framework classes</h2><p>All we know about tricky view lifecycle. When we create a part of user interface and
+show it with help of framework, our view has to pass many stages before it will be fully prepared for presenting.
+<em>I would call &lsquo;A View&rsquo; all user inteface stuff like activity, fragment, view or
+whatever you use to interact with a user. It&rsquo;s not so important in terms of MVP.</em>
+So we can&rsquo;t just put a view as a presenter dependency, we need to setup a presenter later from one of view&rsquo;s
+lifecycler callback. Also we can&rsquo;t put a presenter as a view dependency because view can be inflated via xml layout and system <code>LayoutInflater</code> will instantiate our view through reflection. I know this looks dirty but it&rsquo;s a single path to connect them together.
+So our draft will look like this:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>OurView</span> <span style=color:#66d9ef>extends</span> android<span style=color:#f92672>.</span><span style=color:#a6e22e>view</span><span style=color:#f92672>.</span><span style=color:#a6e22e>View</span>
+  <span style=color:#66d9ef>implements</span> Service<span style=color:#f92672>&lt;</span>Model<span style=color:#f92672>,</span> View<span style=color:#f92672>&gt;,</span>
+  View <span style=color:#f92672>{</span>
+
+  <span style=color:#66d9ef>private</span> Wire wire<span style=color:#f92672>;</span>
+
+  <span style=color:#66d9ef>public</span> <span style=color:#a6e22e>OurView</span><span style=color:#f92672>(</span>Context ctx<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>super</span><span style=color:#f92672>(</span>ctx<span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+
+  <span style=color:#66d9ef>public</span> OurView <span style=color:#a6e22e>connected</span><span style=color:#f92672>(</span>Wire wire<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>wire</span> <span style=color:#f92672>=</span> wire<span style=color:#f92672>;</span>
+    <span style=color:#66d9ef>return</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>;</span>
+  <span style=color:#f92672>}</span>
+
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>protected</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onAttachedToWindow</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>super</span><span style=color:#f92672>.</span><span style=color:#a6e22e>onAttachedToWindow</span><span style=color:#f92672>();</span>
+    <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>wire</span><span style=color:#f92672>.</span><span style=color:#a6e22e>plugIn</span><span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>protected</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onDetachFromWindow</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>super</span><span style=color:#f92672>.</span><span style=color:#a6e22e>onDetachFromWindow</span><span style=color:#f92672>();</span>
+    <span style=color:#66d9ef>this</span><span style=color:#f92672>.</span><span style=color:#a6e22e>wire</span><span style=color:#f92672>.</span><span style=color:#a6e22e>unplug</span><span style=color:#f92672>();</span>
+  <span style=color:#f92672>}</span>
+
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>render</span><span style=color:#f92672>(</span>Person person<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#75715e>//TODO: render
+</span><span style=color:#75715e></span>  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>and an <code>Activity</code>:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>class</span> <span style=color:#a6e22e>OurActivity</span> <span style=color:#66d9ef>extends</span> Activity <span style=color:#f92672>{</span>
+
+  <span style=color:#a6e22e>@Override</span>
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>onCreate</span><span style=color:#f92672>(</span>Bundle savedState<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>super</span><span style=color:#f92672>.</span><span style=color:#a6e22e>onCreate</span><span style=color:#f92672>(</span>savedState<span style=color:#f92672>);</span>
+    setContentView<span style=color:#f92672>(</span>
+      <span style=color:#66d9ef>new</span> OurView<span style=color:#f92672>(</span><span style=color:#66d9ef>this</span><span style=color:#f92672>).</span><span style=color:#a6e22e>connected</span><span style=color:#f92672>(</span>
+        <span style=color:#66d9ef>new</span> Wire<span style=color:#f92672>(</span>
+          <span style=color:#66d9ef>new</span> Model<span style=color:#f92672>()</span>
+        <span style=color:#f92672>)</span>
+      <span style=color:#f92672>)</span>
+    <span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>Now our view service will be connected to model service when view attached to window and
+disconnected when detached from it - connection depends on view lifecycle.</p><h2 id=tests>Tests!</h2><p>The result of work. View and model are independent now. Model can be tested with plain
+junit tests. For view tests I prefer Robolectric.</p><p>View&rsquo;s test:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#a6e22e>@RunWith</span><span style=color:#f92672>(</span>RobolectricTestRunner<span style=color:#f92672>.</span><span style=color:#a6e22e>class</span><span style=color:#f92672>)</span>
+<span style=color:#a6e22e>@Config</span><span style=color:#f92672>(</span>constants <span style=color:#f92672>=</span> BuildConfig<span style=color:#f92672>.</span><span style=color:#a6e22e>class</span><span style=color:#f92672>,</span> sdk <span style=color:#f92672>=</span> 25<span style=color:#f92672>,</span> application <span style=color:#f92672>=</span> TestApp<span style=color:#f92672>.</span><span style=color:#a6e22e>class</span><span style=color:#f92672>)</span>
+<span style=color:#66d9ef>public</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>ViewTest</span> <span style=color:#f92672>{</span>
+
+    <span style=color:#a6e22e>@Test</span>
+    <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>renderNameTest</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+        <span style=color:#66d9ef>final</span> TestActivity activity <span style=color:#f92672>=</span> Robolectric<span style=color:#f92672>.</span><span style=color:#a6e22e>setupActivity</span><span style=color:#f92672>(</span>TestActivity<span style=color:#f92672>.</span><span style=color:#a6e22e>class</span><span style=color:#f92672>);</span>
+        <span style=color:#66d9ef>final</span> View view <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> View<span style=color:#f92672>(</span>activity<span style=color:#f92672>);</span>
+        view<span style=color:#f92672>.</span><span style=color:#a6e22e>connected</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> WireStub<span style=color:#f92672>&lt;&gt;());</span>
+        activity<span style=color:#f92672>.</span><span style=color:#a6e22e>setContentView</span><span style=color:#f92672>(</span>view<span style=color:#f92672>);</span>
+        <span style=color:#66d9ef>final</span> String firstName <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;First&#34;</span><span style=color:#f92672>;</span>
+        <span style=color:#66d9ef>final</span> String lastName <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;Last&#34;</span><span style=color:#f92672>;</span>
+        view<span style=color:#f92672>.</span><span style=color:#a6e22e>render</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> FullName<span style=color:#f92672>(</span>firstName<span style=color:#f92672>,</span> lastName<span style=color:#f92672>));</span>
+        MatcherAssert<span style=color:#f92672>.</span><span style=color:#a6e22e>assertThat</span><span style=color:#f92672>(</span>
+            <span style=color:#e6db74>&#34;First name wasn&#39;t displayed correctly&#34;</span><span style=color:#f92672>,</span>
+            EditText<span style=color:#f92672>.</span><span style=color:#a6e22e>class</span><span style=color:#f92672>.</span><span style=color:#a6e22e>cast</span><span style=color:#f92672>(</span>activity<span style=color:#f92672>.</span><span style=color:#a6e22e>findViewById</span><span style=color:#f92672>(</span>R<span style=color:#f92672>.</span><span style=color:#a6e22e>id</span><span style=color:#f92672>.</span><span style=color:#a6e22e>edit_first_name</span><span style=color:#f92672>)).</span><span style=color:#a6e22e>getText</span><span style=color:#f92672>().</span><span style=color:#a6e22e>toString</span><span style=color:#f92672>(),</span>
+            Matchers<span style=color:#f92672>.</span><span style=color:#a6e22e>equalTo</span><span style=color:#f92672>(</span>firstName<span style=color:#f92672>)</span>
+        <span style=color:#f92672>);</span>
+        MatcherAssert<span style=color:#f92672>.</span><span style=color:#a6e22e>assertThat</span><span style=color:#f92672>(</span>
+            <span style=color:#e6db74>&#34;Last name wasn&#39;t displayed correctly&#34;</span><span style=color:#f92672>,</span>
+            EditText<span style=color:#f92672>.</span><span style=color:#a6e22e>class</span><span style=color:#f92672>.</span><span style=color:#a6e22e>cast</span><span style=color:#f92672>(</span>activity<span style=color:#f92672>.</span><span style=color:#a6e22e>findViewById</span><span style=color:#f92672>(</span>R<span style=color:#f92672>.</span><span style=color:#a6e22e>id</span><span style=color:#f92672>.</span><span style=color:#a6e22e>edit_last_name</span><span style=color:#f92672>)).</span><span style=color:#a6e22e>getText</span><span style=color:#f92672>().</span><span style=color:#a6e22e>toString</span><span style=color:#f92672>(),</span>
+            Matchers<span style=color:#f92672>.</span><span style=color:#a6e22e>equalTo</span><span style=color:#f92672>(</span>lastName<span style=color:#f92672>)</span>
+        <span style=color:#f92672>);</span>
+    <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><p>and model test:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#66d9ef>public</span> <span style=color:#66d9ef>final</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>ModelTest</span> <span style=color:#f92672>{</span>
+  
+  <span style=color:#a6e22e>@Test</span>
+  <span style=color:#66d9ef>public</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>changeNameTest</span><span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+    <span style=color:#66d9ef>final</span> FakeStore store <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> FakeStore<span style=color:#f92672>();</span>
+    <span style=color:#66d9ef>final</span> Model model <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> Model<span style=color:#f92672>(</span>store<span style=color:#f92672>);</span>
+    model<span style=color:#f92672>.</span><span style=color:#a6e22e>change</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> FullName<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;First&#34;</span><span style=color:#f92672>,</span> <span style=color:#e6db74>&#34;Last&#34;</span><span style=color:#f92672>));</span>
+    MatcherAssert<span style=color:#f92672>.</span><span style=color:#a6e22e>assertThat</span><span style=color:#f92672>(</span>
+      <span style=color:#e6db74>&#34;Name wasn&#39;t saved correctly&#34;</span><span style=color:#f92672>,</span>
+      store<span style=color:#f92672>.</span><span style=color:#a6e22e>check</span><span style=color:#f92672>(</span><span style=color:#e6db74>&#34;/person/name/[./first/text() = &#39;First&#39; and ./last/text() = &#39;Last&#39;]&#34;</span><span style=color:#f92672>),</span>
+      Matchers<span style=color:#f92672>.</span><span style=color:#a6e22e>is</span><span style=color:#f92672>(</span><span style=color:#66d9ef>true</span><span style=color:#f92672>)</span>
+    <span style=color:#f92672>);</span>
+  <span style=color:#f92672>}</span>
+<span style=color:#f92672>}</span>
+</code></pre></div><h2 id=-->&ndash;</h2><p>I&rsquo;ve never used this approach in any big projects, it&rsquo;s just an idea that I&rsquo;m implementing in some little pet projects.
+Also I&rsquo;m still thinking about good names for objects, maybe I&rsquo;ll rename these services, packets and wires into something more self-explanatory.
+So if you have any feedback with corrections, ideas or critique please write a comment below.</p></div><footer></footer></article></section></div><footer class=footer><section class=container><p>g4s8.public@gmail.com</p>© 2020</section></footer></main><script type=application/javascript>var doNotTrack=false;if(!doNotTrack){(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create','UA-93683398-3','auto');ga('send','pageview');}</script></body></html>

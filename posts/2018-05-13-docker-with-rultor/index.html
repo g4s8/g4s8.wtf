@@ -1,0 +1,87 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=author content="Kirill Che."><meta name=description content="Kirill Che (g4s8) personal website"><meta name=keywords content="blog,developer,personal,g4s8"><meta name=twitter:card content="summary"><meta name=twitter:title content="Release Docker with Rultor"><meta name=twitter:description content="Rultor is a great bot to automate development life-cycle: just post a comment in a GitHub ticket and your project will be released. Also it can merge pull-requests and deploy code to production but now I want to speak about how to release a Docker image.
+Build, tag, push Usually, when you are releasing new docker image you have to pull GitHub repository, build an image, create a tag for new build, upload it to your registry and add a tag to repository."><meta property="og:title" content="Release Docker with Rultor"><meta property="og:description" content="Rultor is a great bot to automate development life-cycle: just post a comment in a GitHub ticket and your project will be released. Also it can merge pull-requests and deploy code to production but now I want to speak about how to release a Docker image.
+Build, tag, push Usually, when you are releasing new docker image you have to pull GitHub repository, build an image, create a tag for new build, upload it to your registry and add a tag to repository."><meta property="og:type" content="article"><meta property="og:url" content="https://www.g4s8.wtf/posts/2018-05-13-docker-with-rultor/"><meta property="article:published_time" content="2018-05-13T00:00:00+00:00"><meta property="article:modified_time" content="2018-05-13T00:00:00+00:00"><base href=https://www.g4s8.wtf/posts/2018-05-13-docker-with-rultor/><title>Release Docker with Rultor · Kirill Che. (g4s8)</title><link rel=canonical href=https://www.g4s8.wtf/posts/2018-05-13-docker-with-rultor/><link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CMerriweather:300,700%7CSource+Code+Pro:400,700" rel=stylesheet><link rel=stylesheet href=https://use.fontawesome.com/releases/v5.8.1/css/all.css integrity=sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf crossorigin=anonymous><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin=anonymous><link rel=stylesheet href=/css/coder.min.28d751104f30c16da1aa1bb04015cbe662cacfe0d1b01af4f2240ad58580069c.css integrity="sha256-KNdREE8wwW2hqhuwQBXL5mLKz+DRsBr08iQK1YWABpw=" crossorigin=anonymous media=screen><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-32x32.png sizes=32x32><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-16x16.png sizes=16x16><meta name=generator content="Hugo 0.78.1"></head><body><main class=wrapper><nav class=navigation><section class=container><a class=navigation-title href=/>Kirill Che. (g4s8)</a>
+<input type=checkbox id=menu-toggle>
+<label class="menu-button float-right" for=menu-toggle><i class="fas fa-bars"></i></label><ul class=navigation-list><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/about/>About</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/posts/>Blog</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/contact/>Contact me</a></li></ul></section></nav><div class=content><section class="container post"><article><header><div class=post-title><h1 class=title>Release Docker with Rultor</h1></div><div class=post-meta><div class=date><span class=posted-on><i class="fas fa-calendar"></i><time datetime=2018-05-13T00:00:00Z>May 13, 2018</time></span>
+<span class=reading-time><i class="fas fa-clock"></i>4 minutes read</span></div></div></header><div><p><a href=http://rultor.com>Rultor</a> is a great bot to automate development life-cycle:
+just post a comment in a GitHub ticket and your project will be
+released. Also it can merge pull-requests and deploy code to production
+but now I want to speak about how to release a
+<a href=https://docs.docker.com/>Docker</a> image.</p><h2 id=build-tag-push>Build, tag, push</h2><p>Usually, when you are releasing new docker image
+you have to pull GitHub repository, build an image,
+create a tag for new build, upload it to your registry
+and add a tag to repository.
+With Rultor you can make it with one comment in GitHub:</p><pre><code>@rultor release, tag=`0.1`
+</code></pre><p>It can be configured to make all these steps automatically.
+When Rultor released this image you may use it as you want:
+start locally with <code>docker run</code>, run tests against this image
+or deploy to production server:
+![Workflow]({{ site.baseurl }}/images/docker-with-rultor.png)</p><h2 id=docker-in-docker>Docker in Docker</h2><p>Rultor runs each build
+<a href=http://doc.rultor.com/docker.html>in Docker container</a>
+it has a lot of benefits, but when we are building Docker images in Rultor
+we should be careful.
+Running Docker in Docker
+<a href=https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/>may be dangerous</a>
+because of security issues, filesystem issues,
+docker cache will be missed in child container and it can produce
+data corruption in some cases.
+So instead of running <code>docker build|tag|push</code> commands in new Docker daemon
+we can invoked it on Rultor&rsquo;s host from release-script.
+It&rsquo;s a new <a href=https://github.com/yegor256/rultor/issues/1257>feature in Rultor</a>,
+now it shares Docker daemon socket via <a href=https://docs.docker.com/storage/bind-mounts/>bind-mounting</a> it to container:</p><pre><code>docker run -v /var/run/docker.sock:/var/run/docker.sock
+</code></pre><p>so we can access Docker daemon in rultor-script with <code>docker</code> client tool without starting
+Docker daemon. It also has some <a href=https://github.com/yegor256/rultor/issues/1259>security issues</a>,
+but it can be fixed by using <a href=https://github.com/Tecnativa/docker-socket-proxy>docker-socket-proxy</a>
+instead of daemon unix-socket.</p><h2 id=example>Example</h2><p>Let say you have maven java project and you want to pack it
+as docker image. First of all you have to write a <code>Dockerfile</code>
+(<em>You can find example project here: <a href=https://github.com/g4s8/g4s8.github.io/tree/master/samples/docker-with-rultor>samples/docker-with-rultor</a></em>):</p><pre><code># Build stage
+FROM g4s8/alpine:jdk-8 as build
+# Version argument (should be passed by Rultor)
+ARG version=&quot;1.0-SNAPSHOT&quot;
+WORKDIR /build
+# Copying project
+COPY pom.xml ./pom.xml
+COPY src ./src
+# Update project vesion to $version argument and build a jar
+RUN mvn versions:set -DnewVersion=${version} install -Pdocker
+
+# Run stage
+FROM g4s8/alpine:jre-8
+WORKDIR /app
+# Copy build from build-stage layer
+COPY --from=build /build/target/app.jar /app/app.jar
+COPY --from=build /build/target/deps /app/deps
+# Run main class
+ENTRYPOINT [&quot;java&quot;]
+EXPOSE 80
+CMD [&quot;-cp&quot;, &quot;app.jar:deps/*&quot;, &quot;com.sample.App&quot;, &quot;--port=80&quot;]
+</code></pre><p>This Dockerfile has two <a href=https://docs.docker.com/develop/develop-images/multistage-build/>stages</a>:
+build and run.
+Build stage copy sources from repository and compile them
+to jar file with dependencies. The result of build stage is
+<code>taget/app.jar</code> and <code>target/deps/</code>.
+Run stage just starts main class of <code>app.jar</code>.</p><p>Then you have to write release script for Rultor in <code>.rultor.yml</code>:</p><pre><code>docker:
+  image: &quot;g4s8/rultor:0.5&quot; # Alpine image with docker
+env:
+  MAVEN_OPTS: &quot;-XX:MaxPermSize=256m -Xmx1g&quot;
+release:
+  script:
+    - 'mvn install -Pqulice -B --quiet'
+    - 'command sudo docker build --tag=&quot;your-registry.com/example:$tag&quot; --build-arg=&quot;version=$tag&quot; .'
+    - 'command sudo docker push &quot;your-registry.com/example:$tag&quot;'
+    - 'command sudo docker image rm &quot;your-registry.com/example:$tag&quot;'
+</code></pre><p>First of all we run tests (with <a href=https://github.com/teamed/qulice>Qulice</a>) to skip them in image build phase.
+Then we build an image, here we are using <code>$tag</code> environment as tag name
+(<code>--tag="your-registry.com/example:$tag"</code>) and as argument (<code>--build-arg="version=$tag"</code>)
+to pass it to build via <code>ARG version="1.0-SNAPSHOT"</code>.
+It&rsquo;s important to use <code>command sudo</code> here instead of <code>sudo</code> because Rultor
+has an alias for <code>sudo</code>: <code>sudo='sudo -i'</code> which change current directory for executing command
+to user&rsquo;s home, where we need to run it in current directory.
+Then we push an image to our registry with <code>docker push</code> and finally
+we remove an image from Rultor to cleanup.
+That&rsquo;s all. Now we have to add Rultor as a collaborator to repository and post
+a comment in a ticket:</p><pre><code>@rultor release, tag=`0.1`
+</code></pre><p>Also don&rsquo;t forget to change <a href=https://docs.docker.com/registry/>Docker registry</a> in <code>.rultor.yml</code>
+to your own instead of placeholder (your-registry.com).</p><p>All done, now you can run your image to verify:</p><pre><code>docker run -d -p 8080:80 your-registry/example:0.1
+curl localhost:8080
+</code></pre><p>if you see <code>OK</code> curl output then your image is working fine.</p><p><code>:wq</code></p></div><footer></footer></article></section></div><footer class=footer><section class=container><p>g4s8.public@gmail.com</p>© 2020</section></footer></main><script type=application/javascript>var doNotTrack=false;if(!doNotTrack){(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create','UA-93683398-3','auto');ga('send','pageview');}</script></body></html>

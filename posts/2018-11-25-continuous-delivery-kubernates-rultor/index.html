@@ -1,0 +1,78 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=author content="Kirill Che."><meta name=description content="Kirill Che (g4s8) personal website"><meta name=keywords content="blog,developer,personal,g4s8"><meta name=twitter:card content="summary"><meta name=twitter:title content="Continuous Delivery in Kubernetes with Rultor"><meta name=twitter:description content="Previously, I was speaking about [Docker build automation]({{ site.baseurl }}/docker-with-rultor) with Rultor, where I explained how to build docker-images and push them to registry after release approve. Now I&rsquo;ll show how to deploy these images to staging environment of Kubernetes cluster with one comment on GitHub ticket.
+The goal We need to build Docker image from source code and deploy it to staging environment with one comment on GitHub ticket."><meta property="og:title" content="Continuous Delivery in Kubernetes with Rultor"><meta property="og:description" content="Previously, I was speaking about [Docker build automation]({{ site.baseurl }}/docker-with-rultor) with Rultor, where I explained how to build docker-images and push them to registry after release approve. Now I&rsquo;ll show how to deploy these images to staging environment of Kubernetes cluster with one comment on GitHub ticket.
+The goal We need to build Docker image from source code and deploy it to staging environment with one comment on GitHub ticket."><meta property="og:type" content="article"><meta property="og:url" content="https://www.g4s8.wtf/posts/2018-11-25-continuous-delivery-kubernates-rultor/"><meta property="article:published_time" content="2018-11-25T00:00:00+00:00"><meta property="article:modified_time" content="2018-11-25T00:00:00+00:00"><base href=https://www.g4s8.wtf/posts/2018-11-25-continuous-delivery-kubernates-rultor/><title>Continuous Delivery in Kubernetes with Rultor · Kirill Che. (g4s8)</title><link rel=canonical href=https://www.g4s8.wtf/posts/2018-11-25-continuous-delivery-kubernates-rultor/><link href="https://fonts.googleapis.com/css?family=Lato:400,700%7CMerriweather:300,700%7CSource+Code+Pro:400,700" rel=stylesheet><link rel=stylesheet href=https://use.fontawesome.com/releases/v5.8.1/css/all.css integrity=sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf crossorigin=anonymous><link rel=stylesheet href=https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css integrity="sha256-l85OmPOjvil/SOvVt3HnSSjzF1TUMyT9eV0c2BzEGzU=" crossorigin=anonymous><link rel=stylesheet href=/css/coder.min.28d751104f30c16da1aa1bb04015cbe662cacfe0d1b01af4f2240ad58580069c.css integrity="sha256-KNdREE8wwW2hqhuwQBXL5mLKz+DRsBr08iQK1YWABpw=" crossorigin=anonymous media=screen><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-32x32.png sizes=32x32><link rel=icon type=image/png href=https://www.g4s8.wtf/images/favicon-16x16.png sizes=16x16><meta name=generator content="Hugo 0.78.1"></head><body><main class=wrapper><nav class=navigation><section class=container><a class=navigation-title href=/>Kirill Che. (g4s8)</a>
+<input type=checkbox id=menu-toggle>
+<label class="menu-button float-right" for=menu-toggle><i class="fas fa-bars"></i></label><ul class=navigation-list><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/about/>About</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/posts/>Blog</a></li><li class=navigation-item><a class=navigation-link href=https://www.g4s8.wtf/contact/>Contact me</a></li></ul></section></nav><div class=content><section class="container post"><article><header><div class=post-title><h1 class=title>Continuous Delivery in Kubernetes with Rultor</h1></div><div class=post-meta><div class=date><span class=posted-on><i class="fas fa-calendar"></i><time datetime=2018-11-25T00:00:00Z>November 25, 2018</time></span>
+<span class=reading-time><i class="fas fa-clock"></i>4 minutes read</span></div></div></header><div><p>Previously, I was speaking about
+[Docker build automation]({{ site.baseurl }}/docker-with-rultor)
+with <a href=http://www.rultor.com/>Rultor</a>, where I explained how to
+build docker-images and push them to registry after release approve.
+Now I&rsquo;ll show how to deploy these images to staging environment of
+<a href=https://kubernetes.io/>Kubernetes</a> cluster with one comment
+on <a href=https://github.com/>GitHub</a> ticket.</p><h2 id=the-goal>The goal</h2><p>We need to build Docker image from source code and deploy it to staging
+environment with one comment on GitHub ticket.</p><p>From [previous post]({{ site.baseurl }}/docker-with-rultor) we&rsquo;ve learned
+how to build and push image to Docker registry on release. So now I&rsquo;ll explain
+how to deploy these images.</p><p>I prefer to keep Kubernetes config as <code>yaml</code> files in GitHub repository
+and apply them with <a href=https://github.com/box/kube-applier>kube-applier</a>,
+so the goal of release automation is:</p><ol><li>Setup Kubernetes to automatically apply configuration from GitHub
+repository, when any file changed</li><li>Setup Rultor to update Kubernetes configuration on release with fresh
+Docker images</li></ol><p>So what Rultor should do for <code>release</code> command?</p><ol><li>Build Docker image and push it to registry</li><li>Pull configuration repository</li><li>Edit configuration of staging deployment with new container version</li><li>Commit updated configuration, push it back</li></ol><p>At the same time, Kubernetes service should monitor for updates in
+configuration repository (I&rsquo;m using GitHub webhooks), synchronize it
+and apply all files.</p><p>Here is an overall schema of deployment process:</p><p>![scheme]({{ site.baseurl }}/images/kubescheme.png)</p><p>When architect in repository asks to make a release,
+Rultor builds Docker image, push it to registry and updates
+the deployment in config repository.
+Kubernetes detects these changes from webhook, pulls config repository
+and updates the deployment by downloading new image from registry.</p><h2 id=setup-kube-applier>Setup kube-applier</h2><p>From the <a href=https://github.com/box/kube-applier>README.md</a>:</p><blockquote><p>kube-applier is a service that enables continuous deployment of Kubernetes
+objects by applying declarative configuration files from a Git repository to a Kubernetes cluster.</p></blockquote><p>Before starting, we need to create new repository for <code>yaml</code> configuration files if not exist.</p><p>The role of kube-applier in this system is to read configuration files from
+shared volume and apply them using Kubernetes API.</p><p>Here is the workflow:
+![kube-applier]({{ site.baseurl }}/images/kube-applier.png)</p><p>Rultor edits configuration file of the deployment during release
+and pushes these changes to configuration repository.
+It produces the webhook which triggers public Kubernetes endpoint
+(<code>POST /sync</code> on this image). Ingress controller proxies this hook
+to applier service which has a pod with two containers and one shared volume:</p><ol><li>Sync container, which pulls files from configuration repository to
+shared volume on each http call</li><li>Applier container, which detects changes in configuration files
+on shared volume and apply updates using Kubernetes API</li></ol><p>As sync container I&rsquo;m using very primitive Go server, called
+<a href=https://github.com/g4s8/gsync>gsync</a>, anything that this server does
+is just pull files from GitHub repository to mounted volume.</p><p>Kube-applier periodically checks this volume and apply new changes.</p><p>I&rsquo;m not showing how to do it, because it&rsquo;s fully documented by kube-applier.</p><p>Also, it&rsquo;s necessary to configure binding-role for kube-applier,
+because applier should be able to use Kubernetes API and
+create, delete and update resources in different namespaces.
+See this <a href=https://stackoverflow.com/a/50921129/1723695>SO answer</a>
+for details.</p><h2 id=rultor-setup>Rultor setup</h2><p>Rultor uses <code>.rultor.yml</code> as configuration file, see
+<a href=http://doc.rultor.com/reference.html>full documentation</a> for details.</p><p>We&rsquo;ve already configured docker building with Rultor.
+Usually I&rsquo;m moving it to separate <code>Makefile</code> and just calling
+<code>command sudo make VERSION=$tag</code> from Rultor.</p><p>To automatically update configuration repository, we need to create new GitHub
+user with write permissions.</p><p>It&rsquo;s important to securely store the credentials, I&rsquo;m using
+<a href=https://github.com/yegor256/rultor-remote>rultor-remote</a> tool
+(see documentation for details).</p><p>To pass the password to <code>git</code> command, we can use
+git credentials helpers. First create a script to
+return the password:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#75715e>#!/bin/sh
+</span><span style=color:#75715e></span>exec echo <span style=color:#e6db74>&#34;&lt;deployer-password&gt;&#34;</span>
+</code></pre></div><p>Encrypt it with rultor-remote and add encrypted file to repo.</p><p>Then decrypt it in Rultor&rsquo;s container using <code>decrypt</code> section in <code>.rultor.yml</code>:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yml data-lang=yml><span style=color:#f92672>decrypt</span>:
+    <span style=color:#f92672>password.sh</span>: <span style=color:#e6db74>&#34;repo/password.sh.asc&#34;</span>
+</code></pre></div><p>and use it as git password helper: <code>export GIT_ASKPASS=/tmp/password.sh</code>,
+so now we&rsquo;re able to clone config repo to Rultor&rsquo;s image.</p><p>After that, we need to update container version in deployment. It can be done with <code>sed</code>
+tool:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>set -ie <span style=color:#ae81ff>\
+</span><span style=color:#ae81ff></span>  <span style=color:#e6db74>&#34;s/your.registry.com\/image-name:[0-9\.]*/your.registry.com\/image-name:</span><span style=color:#e6db74>${</span>tag<span style=color:#e6db74>}</span><span style=color:#e6db74>/g&#34;</span> <span style=color:#ae81ff>\
+</span><span style=color:#ae81ff></span>  ./path/to/deployment.yaml
+</code></pre></div><p>This command will replace container image version with <code>$tag</code> Rultor variable which means
+current release version.</p><p>So full release script may look like this:</p><div class=highlight><pre style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-yaml data-lang=yaml><span style=color:#f92672>release</span>:
+  <span style=color:#f92672>script</span>: |<span style=color:#e6db74>
+</span><span style=color:#e6db74>    command sudo make VERSION=$tag
+</span><span style=color:#e6db74>    cp ../password.sh /tmp/password.sh
+</span><span style=color:#e6db74>    chmod +x /tmp/password.sh
+</span><span style=color:#e6db74>    export GITHUB_USERNAME=&#34;&lt;replace with username&gt;&#34;
+</span><span style=color:#e6db74>    git config --global user.email &#34;&lt;replace with email&gt;&#34;
+</span><span style=color:#e6db74>    git config --global user.name &#34;${GITHUB_USERNAME}&#34;
+</span><span style=color:#e6db74>    export GIT_ASKPASS=/tmp/password.sh
+</span><span style=color:#e6db74>    cd /tmp
+</span><span style=color:#e6db74>    git clone &#34;https://${GITHUB_USERNAME}@github.com/name/repo&#34;
+</span><span style=color:#e6db74>    cd repo
+</span><span style=color:#e6db74>    set -ie \
+</span><span style=color:#e6db74>      &#34;s/your.registry.com\/image-name:[0-9\.]*/your.registry.com\/image-name:${tag}/g&#34; \
+</span><span style=color:#e6db74>      ./path/to/deployment.yaml
+</span><span style=color:#e6db74>    git add ./path/to/deploymeny.yaml
+</span><span style=color:#e6db74>    git commit -m &#34;your-service-release-${tag}&#34;
+</span><span style=color:#e6db74>    git push origin master</span>    
+</code></pre></div><p>Don&rsquo;t forget to replace placeholders with real values.</p><p>To test it, just make changes, commit them and ask Rultor to make a release
+in GitHub ticket:</p><pre><code>@rultor realse, tag=`1.0`
+</code></pre><p>and see what happens.</p></div><footer></footer></article></section></div><footer class=footer><section class=container><p>g4s8.public@gmail.com</p>© 2020</section></footer></main><script type=application/javascript>var doNotTrack=false;if(!doNotTrack){(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');ga('create','UA-93683398-3','auto');ga('send','pageview');}</script></body></html>
