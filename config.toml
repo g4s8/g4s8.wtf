@@ -1,0 +1,92 @@
+baseURL = "https://www.g4s8.wtf"
+languageCode = "en-us"
+title = "Kirill Che. (g4s8)"
+theme = "hugo-coder"
+defaultcontentlanguage = "en"
+googleAnalytics = "UA-93683398-3"
+disqusShortname = "g4s8-github-io"
+
+[params]
+    author = "Kirill Che."
+    description = "Kirill Che (g4s8) personal website"
+    keywords = "blog,developer,personal,g4s8"
+    info = "Software architect (distributed/parallel systems, high-load)"
+    avatarurl = "https://avatars0.githubusercontent.com/u/1524988?s=460&v=4"
+    footercontent = "g4s8.public@gmail.com"
+
+    dateformat = "January 2, 2006"
+
+    hideCredits = true
+    hideCopyright = false
+
+    commit = "https://github.com/g4s8/g4s8.wtf"
+
+    rtl = false
+
+    # Use inverted colors
+    inverted = false
+
+    # Series see also post count
+    maxSeeAlsoItems = 5
+
+    # Custom CSS
+    custom_css = ["/stork.css"]
+    
+    # Custom JS
+    custom_js = ["/stork.js"]
+
+# Social links
+[[params.social]]
+    name = "Github"
+    icon = "fab fa-github fa-2x"
+    weight = 1
+    url = "https://github.com/g4s8/"
+[[params.social]]
+    name = "Twitter"
+    icon = "fab fa-twitter fa-2x"
+    weight = 2
+    url = "https://twitter.com/kirill_g4s8/"
+[[params.social]]
+    name = "Stackoverflow"
+    icon = "fab fa-stack-overflow fa-2x"
+    weight = 3
+    url = "https://stackoverflow.com/users/1723695"
+[[params.social]]
+    name = "Telegram"
+    icon = "fab fa-telegram fa-2x"
+    wight = 4
+    url = "https://t.me/kirill_g4s8"
+
+[languages]
+    [languages.en]
+        languagename = "English"
+
+        [languages.en.menu]
+
+            [[languages.en.menu.main]]
+            name = "About"
+            weight = 1
+            url = "about/"
+
+            [[languages.en.menu.main]]
+            name = "Blog"
+            weight = 2
+            url = "posts/"
+
+            [[languages.en.menu.main]]
+            name = "CV"
+            weight = 3
+            url = "cv.pdf"
+
+            [[languages.en.menu.main]]
+            name = "Research"
+            weight = 4
+            url = "research"
+
+            [[languages.en.menu.main]]
+            name = "Contact me"
+            weight = 5
+            url = "contact/"
+
+[deployment]
+order = [".jpg$", ".gif$"]

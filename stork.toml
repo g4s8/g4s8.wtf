@@ -1,0 +1,61 @@
+[input]
+base_directory = "content/posts"
+url_prefix = "/posts/"
+
+[[input.files]]
+path = "2017-4-12-android-database.md"
+url = "2017-4-12-android-database/"
+title = "Android Database"
+
+[[input.files]]
+path = "2017-6-28-fully-encapsulated.md"
+url = "2017-6-28-fully-encapsulated/"
+title = "Fully encapsulated"
+
+[[input.files]]
+path = "2017-8-17-get-rid-of-presenter.md"
+url = "2017-8-17-get-rid-of-presenter/"
+title = "Get rid of presenter"
+
+[[input.files]]
+path = "2018-05-13-docker-with-rultor.md"
+url = "2018-05-13-docker-with-rultor/"
+title = "Docker with Rultor"
+
+[[input.files]]
+path = "2018-07-24-oo-caching.md"
+url = "2018-07-24-oo-caching/"
+title = "OO Caching"
+
+[[input.files]]
+path = "2018-08-10-equals.md"
+url = "2018-08-10-equals/"
+title = "Object equality with Java"
+
+[[input.files]]
+path = "2018-11-25-continuous-delivery-kubernates-rultor.md"
+url = "2018-11-25-continuous-delivery-kubernates-rultor/"
+title = "Continuos delivery in Kubernetes with Rultor"
+
+[[input.files]]
+path = "2019-03-03-fighting-with-java-generics.md"
+url = "2019-03-03-fighting-with-java-generics/"
+title = "Fighting with Java generics"
+
+[[input.files]]
+path = "2019-09-06-instead-of-dto.md"
+url = "2019-09-06-instead-of-dto"
+title = "Instead of DTO"
+
+[[input.files]]
+path = "2019-11-06-object-oriented-testing.md"
+url = "2019-11-06-object-oriented-testing/"
+title = "Object oriented testing"
+
+[[input.files]]
+path = "2020-12-26-enum-objects.md"
+url = "2020-12-26-enum-objects/"
+title = "Enum: object or global variable (Java)"
+
+[output]
+filename = "static/stork.st"
