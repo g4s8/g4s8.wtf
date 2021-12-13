@@ -23,4 +23,4 @@ you can check my CV here: [cv.pdf](/cv.pdf).
  - GitHub account: [github.com/g4s8](https://github.com/g4s8/)
  - Research documents: [/research](/research)
  - StackOverflow account: [users/1723695](https://stackoverflow.com/users/1723695/kirill)
- - Blog posts: [www.g4s8.wtf/posts](/posts)
+ - Blog posts: [g4s8.wtf/posts](/posts)
