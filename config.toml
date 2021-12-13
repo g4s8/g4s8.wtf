@@ -33,7 +33,7 @@ disqusShortname = "g4s8-github-io"
     custom_css = ["/stork.css"]
     
     # Custom JS
-    custom_js = ["/stork.js"]
+    custom_js = ["/stork.js", "/reload.js"]
 
 # Social links
 [[params.social]]
