@@ -1,6 +1,7 @@
 ---
 date: "2019-09-06T00:00:00Z"
 title: Instead of DTO
+draft: true
 ---
 
 Objects use data messages to communicate with each other.

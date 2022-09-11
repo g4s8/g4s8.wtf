@@ -1,12 +1,8 @@
 +++
-draft = false
 date = 2021-06-04T11:28:10+03:00
 title = "Step by step guide for creating GitHub hooks App"
-slug = "" 
-tags = ["GitHub", "webhooks", "DevOps"]
-categories = []
-externalLink = ""
-series = []
+tags = ["GitHub", "webhooks"]
+categories = ["DevOps"]
 +++
 
 GitHub has well-documented REST API endpoints and description for

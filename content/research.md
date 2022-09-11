@@ -69,17 +69,3 @@ By: KIRILL CHERNYAVSKIY
 
 [Download PDF](/degitx-wp.pdf).
 
-## Artipie - binary repository manager
-
-Type: white paper
-
-A  software  project  of  almost  any  size  needs  to  keep  its  binaryartifacts in a repository,
-to enable access to them by programmers, tools, and other teams.
-The quality of the software that managesthe repository matters.
-There are a few categories of such a software, which have their pros and cons, currently on the market.
-However, none of them fully satisfy the requirements of a large group of software companies.
-That’s why a new product is being created.
-
-By: YEGOR BUGAYENKO and KIRILL CHERNYAVSKIY
-
-[Download PDF](/artipie-wp.pdf).

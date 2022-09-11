@@ -90,3 +90,7 @@ disqusShortname = "g4s8-github-io"
 
 [deployment]
 order = [".jpg$", ".gif$"]
+
+[security]
+  [security.funcs]
+    getenv = ["GIT_COMMIT_SHA", "GIT_COMMIT_SHA_SHORT"]

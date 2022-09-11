@@ -1,6 +1,7 @@
 ---
 date: "2019-03-03T00:00:00Z"
 title: Fighting with Java - generics
+draft: true
 ---
 Java generic types are not [true types](https://stackoverflow.com/a/2721557) actually,
 so it's not possible to have few constructors to accept same type with different

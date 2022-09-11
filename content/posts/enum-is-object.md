@@ -1,8 +1,11 @@
----
-date: "2020-12-26T00:00:00Z"
-draft: false
-title: 'Enum: Object or global variable?'
----
++++ 
+draft = false
+date = 2020-12-26T00:00:00Z
+title = "Enum: Object or global variable?"
+description = "My thoughts on enum role in Java programming"
+slug = "enum-is-object" 
+categories = ["Java", "OOP"]
++++
 
 Everybody knows that global variables are evil. In case of global constants it's bad
 because the constant with the global scope creates strong dependency for a component

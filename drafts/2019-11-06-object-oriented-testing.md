@@ -1,6 +1,7 @@
 ---
 date: "2019-11-06T00:00:00Z"
 title: Testing Object Oriented Code
+draft: true
 ---
 
 Any self-respecting programmer must have a blog post about unit testing.

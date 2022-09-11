@@ -1,8 +1,8 @@
----
-date: "2021-02-02T00:00:00Z"
-draft: false
-title: '4 misunderstandings of reactive streams'
----
++++ 
+date = 2021-02-02T00:00:00Z
+title = "Four misunderstandings of reactive streams"
+categories = ["Java", "reactive-streams"]
++++
 
 Do you know what [reactive-streams](https://www.reactive-streams.org/)
 are used for?
