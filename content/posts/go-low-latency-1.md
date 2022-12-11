@@ -1,6 +1,6 @@
 +++ 
 date = 2022-09-10T14:19:32+03:00
-title = "Go low latency patterns"
+title = "Go low latency patterns (I)"
 description = "Programming patterns mostly empirical for low latency applications"
 slug = "go-low-latency-one" 
 tags = ["go-latency"]
