@@ -377,7 +377,8 @@ func main() {
 // array/main.go:4:6: moved to heap: x
 ```
 
-## To be continued
 
-In next posts of this series I'll show other patterns related to
-low latency and memory allocations.
+---
+
+Read about some advanced patterns and hacks in the
+[next part](/posts/go-low-latency-two).
