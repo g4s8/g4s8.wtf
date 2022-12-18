@@ -5,6 +5,7 @@ title = "Enum: Object or global variable?"
 description = "My thoughts on enum role in Java programming"
 slug = "enum-is-object" 
 categories = ["Java", "OOP"]
+aliases = ["/posts/2020-12-26-enum-objects/"]
 +++
 
 Everybody knows that global variables are evil. In case of global constants it's bad
