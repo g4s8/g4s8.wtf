@@ -116,13 +116,12 @@ Performance of all cases units is ns per operation.
 
 | Test           | New + `Error()` | `errors.Is()` | `errors.As()` |
 |----------------|-----------------|---------------|---------------|
-| Baseline       | 1.505           | 5.678         | 61.64         |
-| Custom         | 0.249           | 12.99         | 66.87         |
-| Wrap           | 1.499           | 19.82         | 82.92         |
-| `fmt.Errorf`   | 144.9           | 19.32         | 81.79         |
-| `errors.Wrap`  | 909.3           | 33.11         | 117.7         |
-| `multierr`     | 162.4           | 18.60         | 111.2         |
-
+| Baseline       | 2.558           | 5.678         | 61.64         |
+| Custom         | 27.35           | 12.99         | 66.87         |
+| Wrap           | 33.82           | 19.82         | 82.92         |
+| `fmt.Errorf`   | 152.5           | 19.32         | 81.79         |
+| `errors.Wrap`  | 1046            | 33.11         | 117.7         |
+| `multierr`     | 169.4           | 18.60         | 111.2         |
 
 ### Memory
 
@@ -131,8 +130,8 @@ Memory allocations units is allocations per operation.
 | Test           | New + `Error()` | `errors.Is()` | `errors.As()` |
 |----------------|-----------------|---------------|---------------|
 | Baseline       | 0               | 0             | 0             |
-| Custom         | 0               | 0             | 0             |
-| Wrap           | 0               | 0             | 0             |
+| Custom         | 1               | 0             | 0             |
+| Wrap           | 1               | 0             | 0             |
 | `fmt.Errorf`   | 2               | 0             | 0             |
 | `errors.Wrap`  | 5               | 0             | 0             |
 | `multierr`     | 3               | 0             | 0             |

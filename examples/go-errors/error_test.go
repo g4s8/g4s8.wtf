@@ -14,42 +14,49 @@ var (
 	errTest2 = errors.New("test error")
 )
 
+// helpers
+
+//go:noinline
+func accept(err error) {
+	_ = err.Error()
+}
+
 // benchmarks
 
 func BenchmarkError(b *testing.B) {
 	b.Run("baseline", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_ = errTest.Error()
+			accept(errTest)
 		}
 	})
 	b.Run("custom-err", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			err := errCustom{"test"}
-			_ = err.Error()
+			accept(err)
 		}
 	})
 	b.Run("wrap-struct", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			err := &errWrap{err: errTest}
-			_ = err.Error()
+			accept(err)
 		}
 	})
 	b.Run("wrap-fmt", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			err := fmt.Errorf("%w", errTest)
-			_ = err.Error()
+			accept(err)
 		}
 	})
 	b.Run("pkg-errors", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			err := pkgerr.Wrap(errTest, "test")
-			_ = err.Error()
+			accept(err)
 		}
 	})
 	b.Run("multierr", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			err := multierr.Append(errTest, errTest2)
-			_ = err.Error()
+			accept(err)
 		}
 	})
 }
