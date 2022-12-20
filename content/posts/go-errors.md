@@ -21,6 +21,15 @@ custom error structs, errors from `fmt.Errorf` and errors created by two
 popular libraries [github.com/pkg/errors](https://github.com/pkg/errors)
 and [go.uber.org/multierr](https://github.com/uber-go/multierr).
 
+---
+
+*Disclaimer: I'm not suggesting to optimize the performance of error handling without thinking.
+In most cases, it doesn't matter, and code readability is much more important.
+But I think developers should understand the performance of different cases, and errors handling
+is one of these cases.
+So this post is more like "good to know" and not like "optimization plan".*
+
+---
 
 ## What will be tested there
 
