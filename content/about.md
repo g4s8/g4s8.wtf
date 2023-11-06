@@ -24,3 +24,6 @@ you can check my CV here: [cv.pdf](/cv.pdf).
  - Research documents: [/research](/research)
  - StackOverflow account: [users/1723695](https://stackoverflow.com/users/1723695/kirill)
  - Blog posts: [g4s8.wtf/posts](/posts)
+ - LinkedIn: [in/kirill-che/](https://www.linkedin.com/in/kirill-che/)
+ - Telegram: [@kiryll_che](https://t.me/kiryll_che)
+ - Twitter: [@kiryll_che](https://twitter.com/kiryll_che)
