@@ -1,148 +1,424 @@
 +++
 date = 2022-11-19T19:12:32+03:00
-title = "Go low latency patterns (II)"
+title = "Go low latency patterns -- pointers"
 description = "Patterns for go low-latency code"
 slug = "go-low-latency-two"
 tags = ["go-latency"]
 categories = ["go", "performance"]
+series = ["Go Low Latency"]
 +++
 
-This is the second post in "Go low latency patterns".
 Previously, we discussed common latency problems with
-garbage collector and patterns to avoid it.
-In this post I'll show some advanced patterns and hacks for
-writing low-latency code.
+garbage collector, interfaces, generics and inlines.
+In this post we'll talk about pointers usage in Go.
 If you don't read the [first post](/posts/go-low-latency-one),
 you may want to check it before reading this one.
 
-## Object pools
+This is the second post in "Go low latency patterns"
+[series](/series/go-low-latency), based on the
+"Low Latency Patterns" talk on "GopherCon Singapore 2023",
+slides are available at: https://g4s8.github.io/gophercon-sg-2023
 
-Go standard library has a `sync.Pool` [API](https://pkg.go.dev/sync#Pool) for storing temporary objects in memory
-to avoid redundant allocations. In a few words it keeps unused objects in memory and can remove it at any time,
-but when you need to create a new object, this pool may reuse existing one instead of allocating memory for new object.
-It doesn't help to get rid of heap allocations, but it may help to reduce the amount of allocations. Especially it helps
-when you need to allocate quite bit amount of memory (e.g. image bitmap cache or temporary byte-buffers). It's not recommended
-to use it for frequently allocated small short-lived objects, because overhead of using this pool will be large enough.
+# Pointers
 
-Example:
-*Assuming you have a lot of images you need to process. You can create a pool to store image data to avoid allocations,
-reset each image before drawing, and then draw it as needed.*
+There are two main problems with pointers:
+ - assigning a pointer to a struct field;
+ - returning a pointer from method or function;
+
+In both cases the pointer escapes to heap which affects latency as
+we discussed in previous post.
+
+## Assign to field
+
+*As previously, we disable inlines optimization to avoid writing complex functions
+and prefer simple examples for readability.*
+
+Consider the following example:
 
 ```go
-var size = image.Rect(0, 0, 100, 100)
+package main
 
-// entry point func
-	pool := sync.Pool{
-		New: func() any {
-			return image.NewRGBA(size)
-		},
+type Child int
+
+type Parent struct {
+	Child *Child
+}
+
+func (p *Parent) SetChild(c *Child) {
+	p.Child = c
+}
+
+func (p *Parent) SetChildDefault() {
+	var c Child = 1
+	p.Child = &c
+}
+
+func main() {
+	var p Parent
+	p.SetChildDefault()
+
+	c := Child(2)
+	p.SetChild(&c)
+}
+```
+
+In both cases the child escapes to heap:
+ - in `SetChildDefault`, the local-scope variable `c` escapes;
+ - in `SetChild` the argument for this function escapes;
+
+```txt
+$ go build -gcflags '-m=1 -l'
+
+# example.com
+./main.go:9:7: p does not escape
+./main.go:9:27: leaking param: c
+./main.go:13:7: p does not escape
+./main.go:14:6: moved to heap: c
+./main.go:24:2: moved to heap: c
+```
+
+It's not possible to avoid allocation here.
+Usually, this could be fixed by separating initialization and assignment.
+We initialize all the data with allocation on application startup.
+Then, we use it on the performance-critical path just by reading and writing to the memory allocated.
+
+```go
+package main
+
+type Child int
+
+type Parent struct {
+	Child *Child
+}
+
+func NewParent() *Parent {
+	return &Parent{
+		Child: new(Child),
 	}
-
-// processing func
-        // get image from pool
-	img := pool.Get().(*image.RGBA)
-        // put if back on return
-	defer pool.Put(img)
-
-	// reset image - fill white
-	draw.Draw(img, size, &image.Uniform{C: color.White}, image.ZP, draw.Src)
-
-	// draw red rectangle
-	draw.Draw(img, image.Rect(10, 10, 20, 20),
-          &image.Uniform{C: color.RGBA{R: 255, A: 255}}, image.ZP, draw.Src)
-```
-
-## Short-living objects
-
-For short-living objects you can construct a custom recycling queue using `chan` of structs, and customize
-its parameters. It helps to avoid redundant allocations and moving to heap where possible.
-
-Example:
-*Assume, you need perform a fast processing of a big amount of byte buffers. A custom implementation
-of chan based pool can be used for this.*
-
-```go
-type buffer []byte
-
-type bufferPool struct {
-	recycle chan buffer
 }
 
-
-func (p *bufferPool) get() (b buffer) {
-        select {
-        case b = <-p.recycle:
-                atomic.AddUint64(&p.reuse, 1)
-                return
-        default:
-        }
-	return make(buffer, 1024*8)
+func (p *Parent) SetChild(c Child) {
+	*p.Child = c
 }
 
-func (p *bufferPool) put(b buffer) {
-	select {
-	case p.recycle <- b:
-	default:
-	}
+func (p *Parent) SetChildDefault() {
+	var c Child = 1
+	*p.Child = c
+}
+
+func main() {
+	p := NewParent() // initialization with allocation
+
+	// assume performance critical code
+	p.SetChildDefault()
+
+	c := Child(2)
+	p.SetChild(c)
 }
 ```
 
-And using buffers:
+In this case only initialization values are allocated on heap, but setters code
+doesn't trigger allocations:
+
+```txt
+$ go build -gcflags '-m=1 -l'
+
+# example.com
+./main.go:10:9: &Parent{...} escapes to heap
+./main.go:11:13: new(Child) escapes to heap
+./main.go:15:7: p does not escape
+./main.go:19:7: p does not escape
+```
+
+# Returns
+
+The next important source of pointers heap escape is return of the pointer statements.
+
 ```go
-        b := pool.get()
-        processBuffer(b)
-        pool.put(b)
+package main
+
+type Point struct {
+	X, Y int
+}
+
+func NewPoint(x, y int) *Point {
+	return &Point{x, y}
+}
+
+func main() {
+	p := NewPoint(1, 2)
+	println(p.X, p.Y)
+}
 ```
 
-I compared this implementation for reading `8*1024` bytes from `/dev/zero` in 100 goroutins, where each goroutine
-reads it 100 times, another implementation didn't use pool. Baseline implementation just created new buffer every time
-it was needed it:
-```
-BenchmarkStart/reuse-12         	     98	 12251340 ns/op	 833959 B/op	    212 allocs/op
-BenchmarkStart/no_reuse-12      	     42	 28875223 ns/op	81938353 B/op	  10148 allocs/op
-```
+Here, the value returned by `return &Point{x, y}` will be allocated on the heap.
 
-## Hack for keeping on stack
+To avoid this, we can add fluent setters for simpler initialization and delegate the responsibility
+of constructing the "point" to the caller function.
 
-In [previous post](/posts/go-low-latency-one) I say that one struct is moving to heap when you set a pointer to this struct
-as a field to another struct. What if I say that you can set a pointer to struct without moving child struct to heap?
-
-This approach could be dangerous - you should be absolutely sure that child object has the same life-cycle as parent
-object.
-
-This magic function I copied from `runtime` package of standard library:
 ```go
+package main
+
+type Point struct {
+	X, Y int
+}
+
+func (p *Point) Set(x, y int) *Point {
+	p.X = x
+	p.Y = y
+	return p
+}
+
+func main() {
+	p := new(Point).Set(1, 2)
+	println(p.X, p.Y)
+}
+```
+
+In this example, the point `p` is allocated on the stack because the compiler can prove
+that it won't be used after the function ends.
+
+```asm
+MOVUPS X15, 0x28(SP)		
+LEAQ 0x28(SP), AX		
+MOVL $0x1, BX			
+MOVL $0x2, CX			
+CALL main.(*Point).Set(SB)	
+```
+
+So if you want to avoid allocations on returning pointers, you may return either method receiver pointer,
+like in the example above, or return any of function parameters.
+
+# Examples
+
+The types in the `math/big` package provide a good illustration of types designed for performance-critical code that can avoid memory allocations.
+For instance, in the example below, none of the variables escape to the heap, and all computations on big integers are performed on the stack.
+
+```go
+package main
+
+import "math/big"
+
+func main() {
+	one := new(big.Int).SetInt64(1)
+	two := new(big.Int).SetInt64(2)
+	three := new(big.Int).SetInt64(3)
+	var sum big.Int
+	sum.Add(&sum, one).Add(&sum, two).Add(&sum, three)
+	println(sum.String())
+}
+```
+
+## How to create similar types?
+
+To create similar types that avoid allocations when working with pointers,
+simply follow the rules from the sections above:
+ - do not store external pointers in type fields;
+ - do not return pointers from function/method scope;
+
+Let's create a `SmallInt` type representing small integers with a method to add other small integers
+to it by changing the state and a method to print it as a string.
+
+The type definition may look like one item array:
+
+```go
+type SmallInt [1]int32
+```
+
+Then add a method to set its value and return pointer of itself:
+
+```go
+func (i *SmallInt) Set(x int32) *SmallInt {
+	i[0] = x
+	return i
+}
+```
+
+Method for chaning its state:
+
+```go
+func (i *SmallInt) Add(x, y *SmallInt) *SmallInt {
+	i[0] = x[0] + y[0]
+	return i
+}
+```
+
+And for printing itself as a string:
+
+```go
+func (i *SmallInt) String() string {
+	return strconv.Itoa(int(i[0]))
+}
+```
+
+Now let's use it:
+
+```go
+package main
+
+import "strconv"
+
+type SmallInt [1]int32
+
+func (i *SmallInt) Set(x int32) *SmallInt {
+	i[0] = x
+	return i
+}
+
+func (i *SmallInt) Add(x, y *SmallInt) *SmallInt {
+	i[0] = x[0] + y[0]
+	return i
+}
+
+func (i *SmallInt) String() string {
+	return strconv.Itoa(int(i[0]))
+}
+
+func main() {
+	one := new(SmallInt).Set(1)
+	two := new(SmallInt).Set(2)
+	three := new(SmallInt).Set(3)
+	var sum SmallInt
+	sum.Add(&sum, one).Add(&sum, two).Add(&sum, three)
+	println(sum.String())
+}
+```
+
+If we build this code, we can see that there are no single allocation:
+
+```txt
+$ go build -gcflags '-m=1 -l'
+
+# example.com
+./main.go:7:7: leaking param: i to result ~r0 level=0
+./main.go:12:7: leaking param: i to result ~r0 level=0
+./main.go:12:24: x does not escape
+./main.go:12:27: y does not escape
+./main.go:17:7: i does not escape
+./main.go:22:12: new(SmallInt) does not escape
+./main.go:23:12: new(SmallInt) does not escape
+./main.go:24:14: new(SmallInt) does not escape
+```
+
+Everething was computed on stack like for big integers.
+
+# Dirty hacks
+
+But what if need to bypass allocation in cases where we can't control the code?
+For example if external library has methods which assign pointers to struct fields?
+
+Let's assume our parent and child types are provided by such a library:
+
+```go
+type Child int
+
+type Parent struct {
+	Child *Child
+}
+
+func (p *Parent) SetChild(c *Child) {
+	p.Child = c
+}
+```
+
+And we want to set child field without allocation.
+Actually it's possible to do with unsafe code but with some restrictions:
+
+```go
+func setChildUnsafe(p *Parent, c *Child) {
+	p.Child = (*Child)(noescape(unsafe.Pointer(c)))
+}
+
 //go:nosplit
 //go:nocheckptr
 func noescape(p unsafe.Pointer) unsafe.Pointer {
 	x := uintptr(p)
 	return unsafe.Pointer(x ^ 0)
 }
+
+func main() {
+	var p Parent
+	var c Child
+	setChildUnsafe(&p, &c)
+}
 ```
 
-To use it just pass pointer of target struct via this function and cast back to expected type:
+I got the function `noescape` from Go source code internals. It breaks the dependency
+between parameter pointer and returned pointer, so the escape analyzer can't determine
+that these pointers has any relations.
+
+To use it, just pass pointer of some type as a parameter, and cast the returned pointer back
+to origin type. And thats all, there will be no allocations:
+
+```txt
+go build -gcflags '-m=1 -l'
+# example.com
+./main.go:11:7: p does not escape
+./main.go:11:27: leaking param: c
+./main.go:21:15: p does not escape
+./main.go:15:21: p does not escape
+./main.go:15:32: c does not escape
+```
+
+Everything is on stack:
+
+```asm
+; var p Parent
+MOVQ $0x0, 0x18(SP)	
+; var c Child
+MOVQ $0x0, 0x10(SP)	
+; setChildUnsafe(&p, &c)
+LEAQ 0x18(SP), AX		
+LEAQ 0x10(SP), BX		
+CALL main.setChildUnsafe(SB)	
+```
+
+But be carefull with it.
+**It could be dangerous** --- use only if the child object is not accessible outside of the parent’s stack frame.
+
+Consider auto-cleanup of this field after using it in the same stack frame when child is assigned:
+
 ```go
-type Child struct {
-	Val int
+func setChildUnsafe(p *Parent, c *Child) func() {
+	p.Child = (*Child)(noescape(unsafe.Pointer(c)))
+	return func() {
+		p.Child = nil
+	}
 }
 
-type Parent struct {
-	C *Child
+func dangerousOperation(p *Parent) {
+	var c Child
+	cleanup := setChildUnsafe(p, &c)
+	defer cleanup()
+
+	workWithParent(p)
 }
 
-func (p *Parent) SetChildUnsafe(c *Child) {
-	p.C = (*Child)(noescape(unsafe.Pointer(c)))
+func workWithParent(p *Parent) {
+	// work with parent
 }
 
 func main() {
-	p := Parent{}
-	c := Child{Val: 1}
-	p.SetChildUnsafe(&c)
-	useParent(&p)
+	var p Parent
+	dangerousOperation(&p)
 }
 ```
 
-If you run escape analysis on this code you can be surprised that `c` doesn't escape to heap. This hack
-hides this `Child` reference from escape analysis and it's still allocated on stack, in spite of using it as
-part of `Parent` struct. But **be careful** with this - if parent object lives longer than child, it cause
-unpredictable behavior, child fields can be field with random data or replaced by new objects on stack.
+# Summary
+
+In the second post of the 'Go Low Latency Patterns' series,
+we delved into the use of pointers in Go, exploring how they can lead to heap escape and impact latency.
+We discussed two primary issues: assigning a pointer to a struct field and returning a pointer from a method or function,
+both of which can result in heap allocations.
+We provided practical examples and solutions to avoid these allocations,
+emphasizing the importance of separating initialization and assignment.
+Additionally, we explored scenarios where external code or libraries introduce challenges and discussed 'dirty hacks' to address such situations,
+with a cautionary note on their usage.
+The post concludes with a reminder to be cautious when employing these hacks and highlights the value of
+auto-cleanup to ensure safe operation within the same stack frame.
+
+# Updates
+
+Subscribe to get updates about next posts on this topic:
+ - Telegram: [@g4s8_chan](https://t.me/g4s8_chan)
+ - Twitter: [@kirill_che](https://twitter.com/kiryll_che)

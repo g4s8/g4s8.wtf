@@ -35,6 +35,11 @@ disqusShortname = "g4s8-github-io"
     # Custom JS
     custom_js = ["/stork.js", "/reload.js"]
 
+[taxonomies]
+category = "categories"
+series = "series"
+tag = "tags"
+
 # Social links
 [[params.social]]
     name = "Github"
@@ -55,7 +60,7 @@ disqusShortname = "g4s8-github-io"
     name = "Telegram"
     icon = "fab fa-telegram fa-2x"
     wight = 4
-    url = "https://t.me/kiryll_che"
+    url = "https://t.me/g4s8_chan"
 [[params.social]]
     name = "LinkedIn"
     icon = "fab fa-linkedin fa-2x"
