@@ -3,7 +3,6 @@ languageCode = "en-us"
 title = "Kirill Che. (g4s8)"
 theme = "hugo-coder"
 defaultcontentlanguage = "en"
-googleAnalytics = "UA-93683398-3"
 disqusShortname = "g4s8-github-io"
 
 [params]
@@ -33,7 +32,7 @@ disqusShortname = "g4s8-github-io"
     custom_css = ["/stork.css"]
     
     # Custom JS
-    custom_js = ["/stork.js", "/reload.js"]
+    custom_js = ["/stork.js", "/reload.js", "/cc.js"]
 
 [taxonomies]
 category = "categories"
