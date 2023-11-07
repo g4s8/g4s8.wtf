@@ -5,6 +5,8 @@ theme = "hugo-coder"
 defaultcontentlanguage = "en"
 disqusShortname = "g4s8-github-io"
 
+enableRobotsTXT = true
+
 [params]
     author = "Kirill Che."
     description = "Kirill Che (g4s8) personal website"
