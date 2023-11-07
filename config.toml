@@ -11,14 +11,13 @@ disqusShortname = "g4s8-github-io"
     keywords = "blog,developer,personal,g4s8"
     info = "Software architect (distributed/parallel systems, high-load)"
     avatarurl = "https://avatars0.githubusercontent.com/u/1524988?s=460&v=4"
-    footercontent = "g4s8.public@gmail.com"
 
     dateformat = "January 2, 2006"
 
     hideCredits = true
     hideCopyright = false
 
-    commit = "https://github.com/g4s8/g4s8.wtf"
+    commit = "https://github.com/g4s8/g4s8.wtf/commit/"
 
     rtl = false
 
@@ -32,7 +31,14 @@ disqusShortname = "g4s8-github-io"
     custom_css = ["/stork.css"]
     
     # Custom JS
-    custom_js = ["/stork.js", "/reload.js", "/cc.js"]
+    custom_js = ["/stork.js", "/reload.js"]
+
+    footercontent = """
+    <a href="mailto:g4s8.public@gmail.com">g4s8.public@gmail.com</a><br/>
+    <a title="clicky" href="https://clicky.com/101432902">
+    <img alt="Clicky" src="//static.getclicky.com/media/links/badge.gif" border="0"/></a>
+    <script async data-id="101432902" src="//static.getclicky.com/js"></script>
+    """
 
 [taxonomies]
 category = "categories"
