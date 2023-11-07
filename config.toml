@@ -9,7 +9,7 @@ disqusShortname = "g4s8-github-io"
     author = "Kirill Che."
     description = "Kirill Che (g4s8) personal website"
     keywords = "blog,developer,personal,g4s8"
-    info = "Software architect (distributed/parallel systems, high-load)"
+    info = "Website about Go, distributed systems, high-load"
     avatarurl = "https://avatars0.githubusercontent.com/u/1524988?s=460&v=4"
 
     dateformat = "January 2, 2006"
