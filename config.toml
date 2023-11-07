@@ -89,7 +89,7 @@ tag = "tags"
             [[languages.en.menu.main]]
             name = "CV"
             weight = 3
-            url = "cv.pdf"
+            url = "cv-2.pdf"
 
             [[languages.en.menu.main]]
             name = "Research"
