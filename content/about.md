@@ -16,7 +16,7 @@ and maintainer of a few active projects.
 I'm ocassionally writing [blog posts](/posts) about development.
 
 As developer I write on Java since 2013, and Go since 2016;
-you can check my CV here: [cv.pdf](/cv.pdf).
+you can check my CV here: [cv.pdf](/cv-3.pdf).
 
 ## Links
 
