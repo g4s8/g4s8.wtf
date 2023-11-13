@@ -48,27 +48,27 @@ tag = "tags"
 # Social links
 [[params.social]]
     name = "Github"
-    icon = "fab fa-github fa-2x"
+    icon = "fa fa-github fa-2x"
     weight = 1
     url = "https://github.com/g4s8/"
 [[params.social]]
     name = "Twitter"
-    icon = "fab fa-twitter fa-2x"
+    icon = "fa fa-twitter fa-2x"
     weight = 2
     url = "https://twitter.com/kiryll_che"
 [[params.social]]
     name = "Stackoverflow"
-    icon = "fab fa-stack-overflow fa-2x"
+    icon = "fa fa-stack-overflow fa-2x"
     weight = 3
     url = "https://stackoverflow.com/users/1723695"
 [[params.social]]
     name = "Telegram"
-    icon = "fab fa-telegram fa-2x"
+    icon = "fa fa-telegram fa-2x"
     wight = 4
     url = "https://t.me/g4s8_chan"
 [[params.social]]
     name = "LinkedIn"
-    icon = "fab fa-linkedin fa-2x"
+    icon = "fa fa-linkedin fa-2x"
     wight = 5
     url = "https://www.linkedin.com/in/kirill-che"
 
