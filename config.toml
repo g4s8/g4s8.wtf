@@ -22,6 +22,8 @@ enableRobotsTXT = true
     commit = "https://github.com/g4s8/g4s8.wtf/commit/"
 
     rtl = false
+    since = 2020
+    hideColorSchemeToggle = true
 
     # Use inverted colors
     inverted = false
@@ -30,15 +32,13 @@ enableRobotsTXT = true
     maxSeeAlsoItems = 5
 
     # Custom CSS
-    custom_css = ["/stork.css"]
+    customCSS = ["css/stork.css"]
     
     # Custom JS
-    custom_js = ["/stork.js", "/reload.js"]
+    customJS = ["js/stork.js", "js/custom.js"]
 
-    footercontent = """
-    <a href="mailto:g4s8.public@gmail.com">g4s8.public@gmail.com</a><br/>
-    <script async data-id="101432902" src="//static.getclicky.com/js"></script>
-    """
+[params.clicky]
+  id = "101432902"
 
 [taxonomies]
 category = "categories"
