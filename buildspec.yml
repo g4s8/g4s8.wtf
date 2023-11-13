@@ -1,0 +1,27 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - apt-get update -y
+      - apt-get install wget zip libssl-dev -y
+      - wget --quiet https://github.com/gohugoio/hugo/releases/download/v0.119.0/hugo_extended_0.119.0_linux-amd64.deb
+      - apt install ./hugo_extended_0.119.0_linux-amd64.deb
+      - rm ./hugo_extended_0.119.0_linux-amd64.deb
+      - hugo env
+      - wget --quiet https://github.com/jameslittle230/stork/releases/download/v1.6.0/stork-ubuntu-20-04
+      - chmod +x ./stork-ubuntu-20-04
+      - ./stork-ubuntu-20-04 --version
+  build:
+    commands:
+      - export GIT_COMMIT_SHA=$CODEBUILD_RESOLVED_SOURCE_VERSION
+      - export GIT_COMMIT_SHA_SHORT=$(echo $GIT_COMMIT_SHA | cut -c '-6')
+      - ./stork-ubuntu-20-04 build --input stork.toml --output static/stork.st
+      - hugo
+  post_build:
+    commands:
+artifacts:
+  # https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html
+  files:
+    - '**/*'
+  base-directory: public
