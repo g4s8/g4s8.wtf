@@ -12,7 +12,8 @@ phases:
       - wget --quiet https://github.com/jameslittle230/stork/releases/download/v1.6.0/stork-ubuntu-20-04
       - chmod +x ./stork-ubuntu-20-04
       - ./stork-ubuntu-20-04 --version
-      - git submodule update --init --recursive
+      - rm -fr themes/hugo-coder
+      - git clone --depth 1 https://github.com/luizdepra/hugo-coder.git themes/hugo-coder
   build:
     commands:
       - export GIT_COMMIT_SHA=$CODEBUILD_RESOLVED_SOURCE_VERSION
