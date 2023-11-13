@@ -1,7 +1,7 @@
 +++
 date = 2022-11-19T19:12:32+03:00
 title = "Go low latency patterns -- pointers"
-description = "Patterns for go low-latency code"
+description = "Second part of go low-latency series: heap, stacks, pointers, hacks. Analyze with assembly and objtool. Escape analysis. Memory optimizations. GoopherCon Singapore 2023."
 slug = "go-low-latency-two"
 tags = ["go-latency"]
 categories = ["go", "performance"]

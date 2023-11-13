@@ -1,11 +1,12 @@
 +++ 
 date = 2022-09-10T14:19:32+03:00
 title = "Go low latency patterns -- interfaces, generics and inlines"
-description = "First part of low-latency series: heap, interfaces, generics"
+description = "First part of go low-latency series: heap, stack, interfaces, generics and assembly. Analyze with assembly and objtool. Escape analysis. Memory optimizations. GoopherCon Singapore 2023."
 slug = "go-low-latency-one" 
 tags = ["go-latency", "go-interfaces", "go-generics"]
 categories = ["go", "performance"]
 series = ["Go Low Latency"]
+keywords = ["Go", "low-latency", "Golang", "heap", "memory", "interface", "assembly"]
 
 +++
 
