@@ -664,11 +664,11 @@ Here's a summary table for the three different approaches discussed in this post
  - function with interface type parameters;
  - function with generic type parameters derived from interface type;
 
-| Type         | Allocs        | Dyn. dispatch    | Inline     | Design |
-|--------------|---------------|------------------|------------|--------|
-| Exact        | No            | No               | Yes        | Maybe  |
-| Interface    | Inline        | Inline           | Yes        | Good   |
-| Generics     | Shapes        | Yes              | No         | Good   |
+| Type         | Allocs        | Dyn. dispatch    | Inline     |
+|:-------------|:--------------|:-----------------|:-----------|
+| Exact        | No            | No               | Yes        |
+| Interface    | Inline        | Inline           | Yes        |
+| Generics     | Shapes        | Yes              | No         |
 
 In the table above,
 "exact" type parameters can help avoid allocations entirely.
