@@ -4,7 +4,7 @@ phases:
   pre_build:
     commands:
       - apt-get update -y
-      - apt-get install wget zip libssl-dev -y
+      - apt-get install git wget zip libssl-dev -y
       - wget --quiet https://github.com/gohugoio/hugo/releases/download/v0.119.0/hugo_extended_0.119.0_linux-amd64.deb
       - apt install ./hugo_extended_0.119.0_linux-amd64.deb
       - rm ./hugo_extended_0.119.0_linux-amd64.deb
@@ -12,6 +12,7 @@ phases:
       - wget --quiet https://github.com/jameslittle230/stork/releases/download/v1.6.0/stork-ubuntu-20-04
       - chmod +x ./stork-ubuntu-20-04
       - ./stork-ubuntu-20-04 --version
+      - git submodule update --init --recursive
   build:
     commands:
       - export GIT_COMMIT_SHA=$CODEBUILD_RESOLVED_SOURCE_VERSION
