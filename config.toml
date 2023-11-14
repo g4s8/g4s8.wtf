@@ -39,6 +39,31 @@ category = "categories"
 series = "series"
 tag = "tags"
 
+[[menu.main]]
+  name = "About"
+  weight = 1
+  url = "about/"
+[[menu.main]]
+  name = "Blog"
+  weight = 2
+  url = "posts/"
+[[menu.main]]
+  name = "CV"
+  weight = 3
+  url = "cv-3.pdf"
+[[menu.main]]
+  name = "Talks"
+  weight = 4
+  url = "talks/"
+[[menu.main]]
+  name = "Research"
+  weight = 5
+  url = "research/"
+[[menu.main]]
+  name = "Contact me"
+  weight = 6
+  url = "contact/"
+
 # Social links
 [[params.social]]
     name = "Github"
@@ -65,37 +90,6 @@ tag = "tags"
     icon = "fa fa-linkedin fa-2x"
     wight = 5
     url = "https://www.linkedin.com/in/kirill-che"
-
-[languages]
-    [languages.en]
-        languagename = "English"
-
-        [languages.en.menu]
-
-            [[languages.en.menu.main]]
-            name = "About"
-            weight = 1
-            url = "about/"
-
-            [[languages.en.menu.main]]
-            name = "Blog"
-            weight = 2
-            url = "posts/"
-
-            [[languages.en.menu.main]]
-            name = "CV"
-            weight = 3
-            url = "cv-3.pdf"
-
-            [[languages.en.menu.main]]
-            name = "Research"
-            weight = 4
-            url = "research"
-
-            [[languages.en.menu.main]]
-            name = "Contact me"
-            weight = 5
-            url = "contact/"
 
 [deployment]
 order = [".jpg$", ".gif$"]
