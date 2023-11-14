@@ -62,7 +62,7 @@ tag = "tags"
 [[menu.main]]
   name = "Contact me"
   weight = 6
-  url = "contact/"
+  url = "about/#contact-me"
 
 # Social links
 [[params.social]]

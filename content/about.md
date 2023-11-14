@@ -10,8 +10,7 @@ I'm software engineer oriented for distributed and parallel systems,
 P2P systems, high-load data applications, reactive systems, low-latency
 programming.
 
-Also, I'm active [open source contributor](https://github.com/g4s8),
-and maintainer of a few active projects.
+Also, I'm active [open source contributor](https://github.com/g4s8).
 
 I'm ocassionally writing [blog posts](/posts) about development.
 
@@ -21,9 +20,15 @@ you can check my CV here: [cv.pdf](/cv-3.pdf).
 ## Links
 
  - GitHub account: [github.com/g4s8](https://github.com/g4s8/)
- - Research documents: [/research](/research)
  - StackOverflow account: [users/1723695](https://stackoverflow.com/users/1723695/kirill)
- - Blog posts: [g4s8.wtf/posts](/posts)
+ - Blog posts: [/posts](/posts)
+ - My talks: [/talks](/talks)
  - LinkedIn: [in/kirill-che/](https://www.linkedin.com/in/kirill-che/)
- - Telegram: [@kiryll_che](https://t.me/kiryll_che)
- - Twitter: [@kiryll_che](https://twitter.com/kiryll_che)
+ - Telegram channel: [@g4s8\_chan](https://t.me/g4s8_chan)
+ - Twitter: [@kiryll\_che](https://twitter.com/kiryll_che)
+
+## Contact me
+
+ - Email: <a href="mailto:g4s8.public@gmail.com">g4s8.public@gmail.com</a>
+ - LinkedIn: [in/kirill-che/](https://www.linkedin.com/in/kirill-che/)
+ - Telegram: [@kiryll\_che](https://t.me/kiryll_che)
