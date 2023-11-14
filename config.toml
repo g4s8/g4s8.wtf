@@ -1,6 +1,6 @@
 baseURL = "https://g4s8.wtf"
 languageCode = "en-us"
-title = "Kirill Che. (g4s8)"
+title = "Kirill Che."
 theme = "hugo-coder"
 defaultcontentlanguage = "en"
 disqusShortname = "g4s8-github-io"
@@ -9,32 +9,26 @@ enableRobotsTXT = true
 
 [params]
     author = "Kirill Che."
-    description = "Kirill Che (g4s8) personal website"
-    keywords = "blog,developer,personal,g4s8"
+    description = "Kirill Che. personal website"
     info = "Website about Go, distributed systems, high-load"
     avatarurl = "https://avatars0.githubusercontent.com/u/1524988?s=460&v=4"
 
     dateformat = "January 2, 2006"
 
+    rtl = false
+    hideColorSchemeToggle = true
+    # Use inverted colors
+    inverted = false
     hideCredits = true
     hideCopyright = false
 
-    commit = "https://github.com/g4s8/g4s8.wtf/commit/"
-
-    rtl = false
     since = 2020
-    hideColorSchemeToggle = true
-
-    # Use inverted colors
-    inverted = false
+    commit = "https://github.com/g4s8/g4s8.wtf/commit/"
 
     # Series see also post count
     maxSeeAlsoItems = 5
 
-    # Custom CSS
     customCSS = ["css/stork.css"]
-    
-    # Custom JS
     customJS = ["js/stork.js", "js/custom.js"]
 
 [params.clicky]
