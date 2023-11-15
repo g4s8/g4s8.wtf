@@ -3,6 +3,7 @@ date = 2021-06-04T11:28:10+03:00
 title = "Step by step guide for creating GitHub hooks App"
 tags = ["GitHub", "webhooks"]
 categories = ["DevOps"]
+aliases = ["/posts/2021-06-04-github-hooks-app/"]
 +++
 
 GitHub has well-documented REST API endpoints and description for

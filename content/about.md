@@ -2,6 +2,8 @@
 title: "About"
 date: 2019-10-11T18:09:02+03:00
 draft: false
+aliases:
+ - contact
 ---
 
 Hi, my name is Kirill.
