@@ -91,6 +91,35 @@ tag = "tags"
     wight = 5
     url = "https://www.linkedin.com/in/kirill-che"
 
+[params.csp]
+  childsrc = ["'self'"]
+  fontsrc = [
+    "'self'",
+  ]
+  formaction = ["'self'"]
+  framesrc = ["'self'"]
+  imgsrc = [
+    "'self'",
+    "https://avatars0.githubusercontent.com",
+    "https://licensebuttons.net"
+  ]
+  objectsrc = ["'none'"]
+  stylesrc = [
+    "'self'",
+    "'unsafe-inline'"
+  ]
+  scriptsrc = [
+    "'self'",
+    "https://static.getclicky.com",
+    "'unsafe-eval'",
+    "'unsafe-inline'"
+  ]
+  prefetchsrc = ["'self'"]
+  connectsrc = [
+    "'self'",
+    "https://files.stork-search.net"
+  ]
+
 [deployment]
 order = [".jpg$", ".gif$"]
 
