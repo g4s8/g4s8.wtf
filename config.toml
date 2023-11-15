@@ -3,7 +3,6 @@ languageCode = "en-us"
 title = "Kirill Che."
 theme = "hugo-coder"
 defaultcontentlanguage = "en"
-disqusShortname = "g4s8-github-io"
 
 enableRobotsTXT = true
 
@@ -98,8 +97,7 @@ tag = "tags"
   ]
   formaction = ["'self'"]
   framesrc = [
-    "'self'",
-    "https://disqus.com"
+    "'self'"
   ]
   imgsrc = [
     "'self'",
@@ -115,7 +113,6 @@ tag = "tags"
     "'self'",
     "https://static.getclicky.com",
     "https://in.getclicky.com",
-    "https://g4s8-github-io.disqus.com",
     "'unsafe-eval'",
     "'unsafe-inline'"
   ]
