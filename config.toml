@@ -129,7 +129,6 @@ tag = "tags"
     "'unsafe-eval'",
     "'unsafe-inline'"
   ]
-  prefetchsrc = ["'self'"]
   connectsrc = [
     "'self'",
     "https://files.stork-search.net",
