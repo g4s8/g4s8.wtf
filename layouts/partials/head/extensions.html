@@ -1,5 +1,35 @@
+<!-- prefetch -->
+<link rel="dns-prefetch" href="creativecommons.org" />
+<link rel="dns-prefetch" href="go.dev" />
+<link rel="dns-prefetch" href="github.com" />
+
+<link rel="preconnect" href="https://avatars0.githubusercontent.com" crossorigin="anonymous"/>
+<link rel="preconnect" href="https://mirrors.creativecommons.org" crossorigin="anonymous"/>
+<link rel="preconnect" href="https://in.getclicky.com" crossorigin="anonymous"/>
+<link rel="preconnect" href="https://static.getclicky.com" crossorigin="anonymous"/>
+
+<link rel="prefetch" href="about/"/>
+<link rel="prefetch" href="talks/">
+<link rel="prefetch" href="research/">
+<link rel="prefetch" href="posts/">
+
+<script type="speculationrules">
+  {
+    "prerender": [
+      {
+        "source": "list",
+        "urls": ["about/", "talks/", "research/", "posts/"]
+      }
+    ]
+  }
+</script>
+
+<!-- end prefetch -->
+
+
+<!-- pagefind -->
 <link href="/pagefind/pagefind-ui.css" rel="stylesheet"/>
-<script src="/pagefind/pagefind-ui.js" async defer></script>
+<script src="/pagefind/pagefind-ui.js"></script>
 <style>
 .pagefind-ui {
   max-width: 836px;
@@ -63,3 +93,4 @@
     ]));
   })(document, window);
 </script>
+<!-- end pagefind -->
