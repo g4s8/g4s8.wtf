@@ -27,8 +27,7 @@ enableRobotsTXT = true
     # Series see also post count
     maxSeeAlsoItems = 5
 
-    customCSS = ["css/stork.css"]
-    customJS = ["js/stork.js", "js/custom.js"]
+    customJS = ["js/custom.js"]
 
     license = """ \
      <div xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/" style="display: inline-block;"> \
@@ -116,6 +115,7 @@ tag = "tags"
   ]
   imgsrc = [
     "'self'",
+    "data:",
     "https://avatars0.githubusercontent.com",
     "https://licensebuttons.net",
     "https://mirrors.creativecommons.org"

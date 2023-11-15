@@ -1,6 +1,7 @@
 (function(location){
-  if (location.hostname === "www.g4s8.wtf") {
-    location.hostname = "g4s8.wtf";
+  var www = location.hostname.startsWith("www.");
+  if (www) {
+    location.hostname = location.hostname.substring(4);
     return;
   }
 

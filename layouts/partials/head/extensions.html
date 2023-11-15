@@ -1,0 +1,65 @@
+<link href="/pagefind/pagefind-ui.css" rel="stylesheet"/>
+<script src="/pagefind/pagefind-ui.js" async defer></script>
+<style>
+.pagefind-ui {
+  max-width: 836px;
+  margin: auto;
+  padding-left: 18px;
+  padding-right: 18px;
+}
+</style>
+<script>
+  function getFirstElementByClassName(className) {
+    var elements = document.getElementsByClassName(className);
+    if (elements.length == 0) {
+      return null;
+    }
+    return elements[0];
+  }
+
+  function insertSearchDivCallback(divID) {
+    return function(document, window, event) {
+      var wrapper = getFirstElementByClassName('wrapper');
+      if (!wrapper) {
+        return 'failed to find wrapper element';
+      }
+      var nav = getFirstElementByClassName('navigation');
+      if (!nav) {
+        return 'failed to find navigation element';
+      }
+
+      var searchDiv = document.createElement('div');
+      searchDiv.id = divID;
+      nav.parentNode.insertBefore(searchDiv, nav.nextSibling);
+      return null;
+    };
+  }
+
+  function registerPagefindUICallback(searchID) {
+    return function(document, window, event) {
+      new PagefindUI({ element: '#'+searchID, showSubResults: true });
+      return null;
+    };
+  }
+
+  function eventListenerCallbacks(document, window, callbacks) {
+    return function(event) {
+      for (var i = 0; i < callbacks.length; i++) {
+        var err = callbacks[i](document, window, event);
+        if (err) {
+          console.error(err);
+          return;
+        }
+      }
+    };
+  }
+
+  (function(document, window){
+    var searchID = 'pagefind-search';
+    window.addEventListener('DOMContentLoaded',
+      eventListenerCallbacks(document, window, [
+        insertSearchDivCallback(searchID),
+        registerPagefindUICallback(searchID)
+    ]));
+  })(document, window);
+</script>
