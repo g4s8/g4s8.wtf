@@ -97,7 +97,10 @@ tag = "tags"
     "'self'",
   ]
   formaction = ["'self'"]
-  framesrc = ["'self'"]
+  framesrc = [
+    "'self'",
+    "https://disqus.com"
+  ]
   imgsrc = [
     "'self'",
     "https://avatars0.githubusercontent.com",
@@ -119,7 +122,8 @@ tag = "tags"
   prefetchsrc = ["'self'"]
   connectsrc = [
     "'self'",
-    "https://files.stork-search.net"
+    "https://files.stork-search.net",
+    "https://in.getclicky.com"
   ]
 
 [deployment]
