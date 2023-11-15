@@ -1,3 +1,29 @@
-if (location.host === "www.g4s8.wtf") {
-  location.host = "g4s8.wtf";
-}
+(function(location){
+  if (location.hostname === "www.g4s8.wtf") {
+    location.hostname = "g4s8.wtf";
+    return;
+  }
+
+  var debug = location.hostname === "localhost";
+  var locationURL = new URL(location);
+  var debugParam = locationURL.searchParams.get("debug");
+  if (debugParam === "true") {
+    debug = true;
+  } else if (debugParam === "false") {
+    debug = false;
+  }
+
+  if (!debug) {
+    var dummy = function(){};
+    console.log = dummy;
+    console.assert = dummy;
+    console.debug = dummy;
+    console.error = dummy;
+    console.info = dummy;
+    console.log = dummy;
+    console.trace = dummy;
+    console.warn = dummy;
+  } else {
+    console.debug("Debug mode enabled");
+  }
+})(location || window.location || document.location)
