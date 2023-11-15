@@ -111,6 +111,8 @@ tag = "tags"
   scriptsrc = [
     "'self'",
     "https://static.getclicky.com",
+    "https://in.getclicky.com",
+    "https://g4s8-github-io.disqus.com",
     "'unsafe-eval'",
     "'unsafe-inline'"
   ]
