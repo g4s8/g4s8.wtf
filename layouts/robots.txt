@@ -1,0 +1,6 @@
+User-agent: *
+
+Disallow: /artipie-wp.pdf
+Disallow: /degitx-atomic-commit.pdf
+Disallow: /degitx-wp.pdf
+Disallow: /rio-introducing.pdf
