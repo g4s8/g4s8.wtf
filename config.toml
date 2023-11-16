@@ -130,6 +130,7 @@ tag = "tags"
     "'self'",
     "https://static.getclicky.com",
     "https://in.getclicky.com",
+    "https://clicky.com",
     "'unsafe-eval'",
     "'unsafe-inline'"
   ]
