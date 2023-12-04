@@ -163,3 +163,5 @@ But these results has a few interesting points:
  `fmt.Errorf`.
  - If you really care about performance when creating a new error, create value based struct error on stack - it may
  cost less than 1ns and zero allocations.
+
+{{< share >}}

@@ -45,6 +45,9 @@ enableRobotsTXT = true
      <br/>\
     """
 
+    twitter_share_ref = "twsrc%5Etfw"
+
+
 [params.clicky]
   id = "101432902"
 

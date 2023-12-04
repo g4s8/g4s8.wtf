@@ -701,6 +701,8 @@ Don't hesitate to redesign your code when needed.
 Adjusting the design of implementation can also improve performance without significant drawbacks.
 For instance, using small functions in interface implementations can help the compiler inline and optimize them.
 
+{{< share >}}
+
 # Updates
 
 Subscribe to get updates about next posts on this topic:
@@ -716,3 +718,4 @@ Subscribe to get updates about next posts on this topic:
  - [lensm](https://github.com/loov/lensm) helps to visualize assembly
  - [Generic implementation](https://github.com/golang/proposal/blob/master/design/generics-implementation-gcshape.md)
  - [Compiler optimizations](https://github.com/golang/go/wiki/CompilerOptimizations):
+

@@ -215,3 +215,5 @@ and behave like a real objects. It's quite friendly to group standard objects in
 application domain to single enum instance. It's easy to use but we still have
 enough flexibility to implement interface by other classes. So don't afraid enums
 just because it's often used wrong, use it carefully and get all benefits in your code.
+
+{{< share >}}

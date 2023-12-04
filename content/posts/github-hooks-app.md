@@ -73,3 +73,5 @@ To check webhook events the GitHub sends to your App and view the responses
 to GitHub, you can check App's page "Advanced" and "Recent Deliveries" section:
 there GitHub displays all event payloads and HTTP requests, and the status of
 delivery with hook's server responses.
+
+{{< share >}}
