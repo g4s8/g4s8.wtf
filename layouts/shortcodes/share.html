@@ -1,6 +1,6 @@
 {{- $ref := .Get 0 | default .Page.Site.Params.twitter_share_ref -}}
 {{- $host := .Page.Site.BaseURL -}}
 {{- $permalink := .Page.Permalink -}}
-<a href="https://twitter.com/share?ref_src={{ $ref }}&url={{ $host }}{{ $permalink }}&original_referer={{ $host }}" class="twitter-share-button" data-dnt="true" data-show-count="false">Tweet</a>
+<a href="https://twitter.com/share?ref_src={{ $ref }}&url={{ $permalink }}&original_referer={{ $host }}" class="twitter-share-button" data-dnt="true" data-show-count="false">Tweet</a>
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
