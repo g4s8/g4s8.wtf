@@ -17,7 +17,7 @@ Also, I'm active [open source contributor](https://github.com/g4s8).
 I'm ocassionally writing [blog posts](/posts) about development.
 
 As developer I write on Java since 2013, and Go since 2016;
-you can check my CV here: [cv.pdf](/cv-3.pdf).
+you can check my CV here: [cv.pdf](/cv-kirill-cherniavskiy.pdf).
 
 ## Links
 

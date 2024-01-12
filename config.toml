@@ -67,7 +67,7 @@ tag = "tags"
 [[menu.main]]
   name = "CV"
   weight = 3
-  url = "cv-3.pdf"
+  url = "cv-kirill-cherniavskiy.pdf"
 [[menu.main]]
   name = "Talks"
   weight = 4
