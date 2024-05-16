@@ -2,8 +2,6 @@
 <link rel="dns-prefetch" href="go.dev" />
 <link rel="dns-prefetch" href="github.com" />
 
-<link rel="preconnect" href="https://avatars0.githubusercontent.com" crossorigin="anonymous"/>
-<link rel="preconnect" href="https://mirrors.creativecommons.org" crossorigin="anonymous"/>
 <link rel="preconnect" href="https://in.getclicky.com" crossorigin="anonymous"/>
 <link rel="preconnect" href="https://static.getclicky.com" crossorigin="anonymous"/>
 
@@ -26,8 +24,8 @@
 
 
 <!-- pagefind -->
-<link href="/pagefind/pagefind-ui.css" rel="stylesheet"/>
-<script src="/pagefind/pagefind-ui.js" async defer></script>
+<link rel="preload" href="/pagefind/pagefind-ui.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+
 <style>
 .pagefind-ui {
   max-width: 836px;
@@ -45,50 +43,53 @@
     return elements[0];
   }
 
-  function insertSearchDivCallback(divID) {
-    return function(document, window, event) {
+  function insertSearchDiv(divID) {
       var wrapper = getFirstElementByClassName('wrapper');
       if (!wrapper) {
-        return 'failed to find wrapper element';
+        console.error('failed to find wrapper element');
       }
       var nav = getFirstElementByClassName('navigation');
       if (!nav) {
-        return 'failed to find navigation element';
+        console.error('failed to find navigation element');
       }
 
       var searchDiv = document.createElement('div');
       searchDiv.id = divID;
       nav.parentNode.insertBefore(searchDiv, nav.nextSibling);
-      return null;
-    };
   }
 
-  function registerPagefindUICallback(searchID) {
-    return function(document, window, event) {
+  function registerPagefindUI(searchID) {
       new PagefindUI({ element: '#'+searchID, showSubResults: true });
-      return null;
-    };
   }
 
-  function eventListenerCallbacks(document, window, callbacks) {
-    return function(event) {
-      for (var i = 0; i < callbacks.length; i++) {
-        var err = callbacks[i](document, window, event);
-        if (err) {
-          console.error(err);
-          return;
-        }
-      }
-    };
-  }
+  const searchID = 'pagefind-search';
+
+  let w = false;
+  let r = false;
+  function callback() {
+    if (w && r) {
+      insertSearchDiv(searchID);
+      registerPagefindUI(searchID);
+    }
+  };
 
   (function(document, window){
-    var searchID = 'pagefind-search';
-    window.addEventListener('DOMContentLoaded',
-      eventListenerCallbacks(document, window, [
-        insertSearchDivCallback(searchID),
-        registerPagefindUICallback(searchID)
-    ]));
+    let script = document.createElement('script');
+    script.src = "/pagefind/pagefind-ui.js";
+    script.async = true;
+    let t = document.getElementsByTagName('script')[0];
+    t.parentNode.insertBefore(script, t);
+    script.onload = function() {
+      if (!r) {
+        r = true;
+        callback();
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', function() {
+      w = true;
+      callback();
+    });
   })(document, window);
 </script>
 <!-- end pagefind -->
