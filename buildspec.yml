@@ -22,7 +22,7 @@ phases:
       - hugo
       - mkdir -pv /tmp/hugo/min
       - >
-        find ./publ/css/ -type f -name '*.css' -exec sh -c '
+        find ./public/css/ -type f -name '*.css' -exec sh -c '
           for css_file; do
             echo "purify $css_file"
             purifycss "$css_file" "./public/**/*.html" --out "/tmp/hugo/min/$(basename $css_file)" -m -i
