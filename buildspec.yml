@@ -7,7 +7,7 @@ phases:
       - apt-get install git wget zip libssl-dev npm -y
       - wget --quiet https://github.com/gohugoio/hugo/releases/download/v0.134.2/hugo_extended_0.134.2_linux-amd64.deb
       - apt install ./hugo_extended_0.134.2_linux-amd64.deb
-      - rm ./hugo_extended_0.126.1_linux-amd64.deb
+      - rm ./hugo_extended_0.134.2_linux-amd64.deb
       - hugo env
       - wget --quiet https://github.com/CloudCannon/pagefind/releases/download/v1.1.0/pagefind_extended-v1.1.0-x86_64-unknown-linux-musl.tar.gz
       - tar -xvzf pagefind_extended-v1.1.0-x86_64-unknown-linux-musl.tar.gz 
