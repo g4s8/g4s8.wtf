@@ -20,8 +20,8 @@ phases:
       - export GIT_COMMIT_SHA=$CODEBUILD_RESOLVED_SOURCE_VERSION
       - export GIT_COMMIT_SHA_SHORT=$(echo $GIT_COMMIT_SHA | cut -c '-6')
       - hugo
+      - mkdir -pv /tmp/hugo/min
       - >
-        mkdir -pv /tmp/hugo/min
         find ./publ/css/ -type f -name '*.css' -exec sh -c '
           for css_file; do
             echo "purify $css_file"
@@ -29,7 +29,7 @@ phases:
             mv -v "/tmp/hugo/min/$(basename $css_file)" "$css_file"
           done
         ' sh {} +
-        rm -fr /tmp/hugo/min
+      - rm -fr /tmp/hugo/min
       - ./pagefind_extended --site ./public
   post_build:
     commands:
