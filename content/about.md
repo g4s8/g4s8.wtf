@@ -6,20 +6,26 @@ aliases:
  - contact
 ---
 
-Hi, my name is Kirill.
+I’m a software engineer specializing in distributed systems, P2P networks, and high-load applications.
+Over the past decade, I’ve worked with global companies like Huawei and
+[contributed to](https://github.com/g4s8) open-source projects.
+My expertise lies in building scalable, low-latency systems that handle massive amounts of data efficiently.
+I also have a deep passion for performance optimization.
 
-I'm software engineer oriented for distributed and parallel systems,
-P2P systems, high-load data applications, reactive systems, low-latency
-programming.
+When I’m not writing code, I actively contribute to the open-source community,
+sharing my knowledge through [blogs](/posts) and conference [talks](/talks).
 
-Also, I'm active [open source contributor](https://github.com/g4s8).
+### Interested in working together or need help with a project?
 
-I'm ocassionally writing [blog posts](/posts) about development.
+Feel free to [contact me](mailto:g4s8.public@gmail.com). Let’s build something great!
 
-As developer I write on Java since 2013, and Go since 2016;
-you can check my CV here: [cv.pdf](/cv-kirill-cherniavskiy.pdf).
+### Contact me
 
-## Links
+ - Email: <a href="mailto:g4s8.public@gmail.com">g4s8.public@gmail.com</a>
+ - LinkedIn: [in/kirill-che/](https://www.linkedin.com/in/kirill-che/)
+ - Telegram: [@kiryll\_che](https://t.me/kiryll_che)
+
+### Links
 
  - GitHub account: [github.com/g4s8](https://github.com/g4s8/)
  - StackOverflow account: [users/1723695](https://stackoverflow.com/users/1723695/kirill)
@@ -29,8 +35,3 @@ you can check my CV here: [cv.pdf](/cv-kirill-cherniavskiy.pdf).
  - Telegram channel: [@g4s8\_chan](https://t.me/g4s8_chan)
  - Twitter: [@kiryll\_che](https://twitter.com/kiryll_che)
 
-## Contact me
-
- - Email: <a href="mailto:g4s8.public@gmail.com">g4s8.public@gmail.com</a>
- - LinkedIn: [in/kirill-che/](https://www.linkedin.com/in/kirill-che/)
- - Telegram: [@kiryll\_che](https://t.me/kiryll_che)
