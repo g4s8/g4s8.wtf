@@ -7,30 +7,26 @@ phases:
       - apt-get install git wget zip libssl-dev npm -y
       - wget --quiet https://github.com/gohugoio/hugo/releases/download/v0.134.2/hugo_extended_0.134.2_linux-amd64.deb
       - apt install ./hugo_extended_0.134.2_linux-amd64.deb
-      - rm ./hugo_extended_0.134.2_linux-amd64.deb
       - hugo env
       - wget --quiet https://github.com/CloudCannon/pagefind/releases/download/v1.1.0/pagefind_extended-v1.1.0-x86_64-unknown-linux-musl.tar.gz
       - tar -xvzf pagefind_extended-v1.1.0-x86_64-unknown-linux-musl.tar.gz 
-      - rm pagefind_extended-v1.1.0-x86_64-unknown-linux-musl.tar.gz 
       - npm install -g purify-css
       - rm -fr themes/hugo-coder
       - ./pagefind_extended --version
       - git clone --depth 1 https://github.com/luizdepra/hugo-coder.git themes/hugo-coder
   build:
     commands:
-      - export GIT_COMMIT_SHA=$CODEBUILD_RESOLVED_SOURCE_VERSION
-      - export GIT_COMMIT_SHA_SHORT=$(echo $GIT_COMMIT_SHA | cut -c '-6')
+      - export GIT_COMMIT_SHA=$CODEBUILD_RESOLVED_SOURCE_VERSION GIT_COMMIT_SHA_SHORT=$(echo $GIT_COMMIT_SHA | cut -c '-6')
       - hugo
-      # - mkdir -pv /tmp/hugo/min
-      # - >
-      #   find ./public/css/ -type f -name '*.css' -exec sh -c '
-      #     for css_file; do
-      #       echo "purify $css_file"
-      #       purifycss "$css_file" "./public/**/*.html" --out "/tmp/hugo/min/$(basename $css_file)" -m -i
-      #       mv -v "/tmp/hugo/min/$(basename $css_file)" "$css_file"
-      #     done
-      #   ' sh {} +
-      # - rm -fr /tmp/hugo/min
+      - mkdir -pv /tmp/hugo/min
+      - >
+        find ./public/css/ -type f -name '*.css' -exec sh -c '
+          for css_file; do
+            echo "purify $css_file"
+            purifycss "$css_file" "./public/**/*.html" --out "/tmp/hugo/min/$(basename $css_file)" -m
+            cp -v "/tmp/hugo/min/$(basename $css_file)" "$css_file"
+          done
+        ' sh {} +
       - ./pagefind_extended --site ./public
   post_build:
     commands:
