@@ -73,10 +73,6 @@ tag = "tags"
   weight = 4
   url = "talks/"
 [[menu.main]]
-  name = "Research"
-  weight = 5
-  url = "research/"
-[[menu.main]]
   name = "Contact me"
   weight = 6
   url = "about/#contact-me"
